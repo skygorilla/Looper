@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -19,7 +20,8 @@ import {
   Clock,
   Globe,
   Trash2,
-  Upload
+  Upload,
+  LoaderCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -83,11 +85,11 @@ const MainPanel = ({
       <div className="text-center mb-6">
         <div className="grid grid-cols-3 items-center h-6 mb-3">
           <div className="justify-self-end">
-            {isThinking && <div className="animate-spin text-2xl">🤔</div>}
+            {isThinking && <LoaderCircle size={24} className="animate-spin text-primary" />}
           </div>
-          <div className="text-white font-semibold">LOOPER</div>
+          <div className={cn("text-white font-semibold transition-all", isRunning && "animate-glow")}>LOOPER</div>
           <div className="justify-self-start">
-            {!isThinking && <div className="text-2xl">⚡</div>}
+            {!isThinking && <div className="text-2xl animate-pulse-subtle">⚡</div>}
           </div>
         </div>
         <div className="text-xs uppercase tracking-wider text-slate-400">{statusText}</div>
@@ -110,19 +112,20 @@ const MainPanel = ({
       <div className="mb-5">
         <div className="flex gap-2.5 mb-3">
           <Button onClick={handleStart} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
-            {isRunning ? <Square size={20} className="text-green-500" /> : <Play size={20} className="text-green-500" />}
+            {isRunning ? <Square size={20} className="text-red-500" /> : <Play size={20} className="text-green-500" />}
           </Button>
           <Button onClick={handlePause} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
             <Pause size={20} className="text-yellow-500" />
           </Button>
           <Button onClick={handleReset} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
-            <Repeat size={20} className="text-red-500" />
+            <Repeat size={20} className="text-blue-500" />
           </Button>
         </div>
       </div>
       
       <textarea 
-        className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16_18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        id="starterPrompt"
+        className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16_18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-primary"
         value={starterPrompt}
         onChange={(e) => setStarterPrompt(e.target.value)}
         placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
@@ -131,7 +134,7 @@ const MainPanel = ({
 
       <div className="flex gap-2.5">
         <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
-          <Zap size={20} className="text-blue-400" />
+          <Zap size={20} className="text-primary" />
         </Button>
       </div>
 
@@ -153,6 +156,8 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   const [prototyperStatus, setPrototyperStatus] = useState('System Ready');
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
+  const isRunningRef = useRef(isRunning);
+  isRunningRef.current = isRunning;
 
   // Tab beep sound function
   const playTabBeep = () => {
@@ -215,8 +220,10 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   };
 
   const handleStart = () => {
-    if (!isRunning) {
-      setIsRunning(true);
+    const willBeRunning = !isRunningRef.current;
+    setIsRunning(willBeRunning);
+    
+    if (willBeRunning) {
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
       setStatusText('Processing...');
@@ -228,16 +235,31 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
         message: `Autopilot starting with prompt: ${starterPrompt.substring(0, 50)}...`
       };
       setConsoleEntries(prev => [newEntry, ...prev]);
+
+      // Simulate work
+      setTimeout(() => {
+        if(isRunningRef.current) {
+           setStatusText('Task Complete');
+           setIsThinking(false);
+        }
+      }, 3000);
+
     } else {
-      setIsRunning(false);
-      setStatusText('Ready');
+      setStatusText('Stopped');
       setIsThinking(false);
     }
   };
 
   const handlePause = () => {
-    setIsPaused(!isPaused);
-    setStatusText(isPaused ? 'Processing...' : 'Paused');
+    const willBePaused = !isPaused;
+    setIsPaused(willBePaused);
+    if(willBePaused) {
+      setStatusText('Paused');
+      setIsThinking(false);
+    } else {
+      setStatusText('Processing...');
+      if(isRunning) setIsThinking(true);
+    }
   };
 
   const handleReset = () => {
@@ -278,6 +300,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   };
 
   const exportConsole = () => {
+    if (typeof window === 'undefined') return;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `console-log-${timestamp}.json`;
     const dataStr = JSON.stringify(consoleEntries, null, 2);
@@ -286,6 +309,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     link.href = URL.createObjectURL(dataBlob);
     link.download = filename;
     link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   const TABS = {
@@ -405,3 +429,5 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     </div>
   );
 };
+
+    
