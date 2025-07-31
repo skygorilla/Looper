@@ -47,44 +47,44 @@ const Screen = () => (
     <div className="flex h-full flex-col">
       <div className="grid grid-cols-3 items-center border-b border-b-border/50 pb-1 font-mono text-xs">
         <div className="flex items-center gap-1 text-primary/80">
-          <Folder size={14} /> Placeholder
+          <Folder size={14} /> Looper
         </div>
-        <div className="text-center font-bold">PLACEHOLDER</div>
+        <div className="text-center font-bold">LOOPER</div>
         <div className="flex items-center justify-end gap-1 text-primary/80">
-          Placeholder <div className="h-3 w-3 rounded-full bg-muted" />
+          Looper <div className="h-3 w-3 rounded-full bg-muted" />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
         <div className="grid grid-cols-2 gap-4 font-code text-xs">
           <ul className="space-y-1">
             <li className="flex items-center gap-2">
-              <ChevronRight size={14} /> Placeholder Item
+              <ChevronRight size={14} /> Looper Item
             </li>
             <li className="flex items-center gap-2 text-primary/70">
-              <ChevronRight size={14} /> Placeholder Item
+              <ChevronRight size={14} /> Looper Item
             </li>
             <li className="flex items-center gap-2 bg-primary/20 text-white">
               <ChevronRight size={14} />{' '}
-              <span className="font-bold">Placeholder Item</span>
+              <span className="font-bold">Looper Item</span>
             </li>
             <li className="flex items-center gap-2 text-primary/70">
-              <ChevronRight size={14} /> Placeholder Item
+              <ChevronRight size={14} /> Looper Item
             </li>
           </ul>
           <ul className="space-y-1">
-            <li className="text-primary/70">Placeholder Text</li>
-            <li className="text-primary/70">Placeholder Text</li>
-            <li className="bg-primary/20 text-white">Placeholder Text</li>
-            <li className="text-primary/70">Placeholder Text</li>
+            <li className="text-primary/70">Looper Text</li>
+            <li className="text-primary/70">Looper Text</li>
+            <li className="bg-primary/20 text-white">Looper Text</li>
+            <li className="text-primary/70">Looper Text</li>
           </ul>
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-t-border/50 pt-2 font-mono">
         <div className="flex items-center gap-2 text-xs">
           <div className="rounded bg-muted px-2 py-1">
-            <span>Placeholder Text</span>
+            <span>Looper Text</span>
           </div>
-          <Badge variant="secondary">placeholder</Badge>
+          <Badge variant="secondary">looper</Badge>
         </div>
         <div className="flex gap-1">
           <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -106,9 +106,9 @@ export function NexusPanel() {
         <div className="flex items-center justify-between border-b-2 border-b-border pb-2">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold uppercase tracking-wider">
-              Placeholder
+              Looper
             </h1>
-            <Badge variant="outline">Placeholder Text</Badge>
+            <Badge variant="outline">Looper Text</Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -117,7 +117,7 @@ export function NexusPanel() {
             <Button variant="ghost" size="icon" className="h-6 w-6">
               <ChevronRight size={20} />
             </Button>
-            <span className="text-sm font-semibold">Placeholder</span>
+            <span className="text-sm font-semibold">Looper</span>
           </div>
         </div>
 
