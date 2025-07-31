@@ -2,16 +2,11 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
-import { Manrope, Fira_Code } from 'next/font/google';
+import { Inter } from 'next/font/google';
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-manrope',
-});
-
-const firaCode = Fira_Code({
-  subsets: ['latin'],
-  variable: '--font-fira-code',
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -28,7 +23,7 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
       </head>
-      <body className={cn("font-body antialiased", manrope.variable, firaCode.variable)} suppressHydrationWarning>
+      <body className={cn("font-sans antialiased", inter.variable)} suppressHydrationWarning>
         {children}
         <Toaster />
       </body>
