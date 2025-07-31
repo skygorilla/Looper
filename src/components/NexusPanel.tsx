@@ -8,71 +8,51 @@ import {
   ChevronRight,
   Copy,
   Folder,
+  Settings,
   Save,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
-const Knob = ({
-  label,
-  value,
-  className,
-}: {
-  label?: string;
-  value?: string;
-  className?: string;
-}) => (
-  <div className={cn('flex flex-col items-center gap-1', className)}>
-    <div className="relative h-10 w-10 rounded-full border-2 border-slate-300 bg-white shadow-inner-md">
-      <div
-        className="absolute h-full w-full transform-gpu transition-transform"
-        style={{ transform: 'rotate(145deg)' }}
-      >
-        <div className="absolute left-1/2 top-0 h-2/5 w-[3px] -translate-x-1/2 rounded-full bg-slate-500"></div>
-      </div>
-    </div>
-    {label && (
-      <span className="text-[10px] font-semibold uppercase text-slate-500">
-        {label}
-      </span>
-    )}
-    {value && (
-      <span className="text-xs font-bold text-slate-700">{value}</span>
-    )}
-  </div>
-);
-
-const SmallKnob = ({ label }: { label?: string }) => (
-  <div className="flex flex-col items-center gap-1">
-    <div className="relative h-7 w-7 rounded-full border-2 border-slate-300 bg-white shadow-inner-sm">
-      <div
-        className="absolute h-full w-full transform-gpu transition-transform"
-        style={{ transform: 'rotate(-45deg)' }}
-      >
-        <div className="absolute left-1/2 top-0 h-2/5 w-0.5 -translate-x-1/2 rounded-full bg-slate-500"></div>
-      </div>
-    </div>
-    {label && (
-      <span className="text-[9px] font-medium uppercase text-slate-500">
-        {label}
-      </span>
-    )}
-  </div>
-);
-
-const Fader = ({ label }: { label?: string }) => (
-  <div className="flex flex-col items-center gap-1">
-    <div className="h-16 w-1.5 rounded-full bg-slate-700 p-0.5">
-      <div className="h-1/3 w-full rounded-full bg-blue-400"></div>
-    </div>
+const ControlButton = ({ label }: { label?: string }) => (
+  <div className="flex flex-col items-center gap-2">
+    <Button variant="outline" size="icon" className="h-12 w-12 rounded-full border-2 border-slate-300 bg-white shadow-inner-md">
+      <Settings size={20} />
+    </Button>
     {label && (
       <span className="text-[10px] font-semibold uppercase text-slate-500">
         {label}
       </span>
     )}
   </div>
+);
+
+const SmallSwitch = ({ label }: { label?: string }) => (
+    <div className="flex flex-col items-center gap-1">
+       <Switch id={label?.toLowerCase().replace(' ','-')} />
+      {label && (
+        <Label htmlFor={label?.toLowerCase().replace(' ','-')} className="text-[9px] font-medium uppercase text-slate-500">
+          {label}
+        </Label>
+      )}
+    </div>
+  );
+
+const FaderControl = ({ label }: { label?: string }) => (
+    <div className="flex flex-col items-center gap-1">
+        <div className="h-20 w-2 rounded-full bg-slate-300 relative">
+            <Button className="h-4 w-4 rounded-full bg-blue-400 absolute" style={{top: '33%', left: '-6px'}}/>
+        </div>
+        {label && (
+          <span className="text-[10px] font-semibold uppercase text-slate-500">
+            {label}
+          </span>
+        )}
+      </div>
 );
 
 const Screen = () => (
@@ -80,51 +60,44 @@ const Screen = () => (
     <div className="flex h-full flex-col">
       <div className="grid grid-cols-3 items-center border-b border-b-slate-600/50 pb-1 font-mono text-sm">
         <div className="flex items-center gap-1 text-cyan-300/80">
-          <Folder size={16} /> LIBRARY
+          <Folder size={16} /> Placeholder
         </div>
-        <div className="text-center text-lg font-bold">NEXUS</div>
+        <div className="text-center text-lg font-bold">PLACEHOLDER</div>
         <div className="flex items-center justify-end gap-1 text-cyan-300/80">
-          ARPEGGIATOR <div className="h-3 w-3 rounded-full bg-slate-600" />
+          Placeholder <div className="h-3 w-3 rounded-full bg-slate-600" />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
         <div className="grid grid-cols-2 gap-4 font-code text-sm">
           <ul className="space-y-1">
             <li className="flex items-center gap-2">
-              <ChevronRight size={16} /> All Categories
+              <ChevronRight size={16} /> Placeholder Item
             </li>
             <li className="flex items-center gap-2 text-cyan-100/70">
-              <ChevronRight size={16} /> Arpeggios
-            </li>
-            <li className="flex items-center gap-2 text-cyan-100/70">
-              <ChevronRight size={16} /> Bass
+              <ChevronRight size={16} /> Placeholder Item
             </li>
             <li className="flex items-center gap-2 bg-blue-500/20 text-white">
               <ChevronRight size={16} />{' '}
-              <span className="font-bold">Fantasy and Dream</span>
+              <span className="font-bold">Placeholder Item</span>
             </li>
             <li className="flex items-center gap-2 text-cyan-100/70">
-              <ChevronRight size={16} /> Gated Pads
-            </li>
-            <li className="flex items-center gap-2 text-cyan-100/70">
-              <ChevronRight size={16} /> Lead
+              <ChevronRight size={16} /> Placeholder Item
             </li>
           </ul>
           <ul className="space-y-1">
-            <li className="text-cyan-100/70">AR Crystal Dream</li>
-            <li className="text-cyan-100/70">AR Fairytale</li>
-            <li className="bg-blue-500/20 text-white">PD Walking into The Dark</li>
-            <li className="text-cyan-100/70">PL Angelic</li>
-            <li className="text-cyan-100/70">PL Glass Bells</li>
+            <li className="text-cyan-100/70">Placeholder Text</li>
+            <li className="text-cyan-100/70">Placeholder Text</li>
+            <li className="bg-blue-500/20 text-white">Placeholder Text</li>
+            <li className="text-cyan-100/70">Placeholder Text</li>
           </ul>
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-t-slate-600/50 pt-2 font-mono">
         <div className="flex items-center gap-2 text-sm">
           <div className="rounded bg-slate-700 px-2 py-1">
-            <span>PD: Walking into The Dark</span>
+            <span>Placeholder Text</span>
           </div>
-          <Badge variant="secondary">reverb</Badge>
+          <Badge variant="secondary">placeholder</Badge>
         </div>
         <div className="flex gap-1">
           <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -146,9 +119,9 @@ export function NexusPanel() {
         <div className="flex items-center justify-between border-b-2 border-b-slate-300 pb-2">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold uppercase tracking-wider">
-              Nexus 5
+              Placeholder
             </h1>
-            <Badge variant="outline">Walking into The Dark</Badge>
+            <Badge variant="outline">Placeholder Text</Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -157,18 +130,18 @@ export function NexusPanel() {
             <Button variant="ghost" size="icon" className="h-6 w-6">
               <ChevronRight size={20} />
             </Button>
-            <span className="text-sm font-semibold">Master</span>
+            <span className="text-sm font-semibold">Placeholder</span>
           </div>
         </div>
 
         <div className="grid grid-cols-[1fr_2.5fr_1fr] gap-4 py-4">
           <div className="flex flex-col items-center justify-between gap-4 rounded-md border-2 border-slate-300 bg-slate-200/70 p-4">
             <div className="text-center">
-              <h2 className="font-bold">MODULATION</h2>
+              <h2 className="font-bold">CONTROL SECTION</h2>
             </div>
             <div className="flex flex-1 flex-col justify-around">
-              <Knob label="MOD.DEPTH" />
-              <Knob label="MOD.SPEED" />
+              <ControlButton label="CONTROL 1" />
+              <ControlButton label="CONTROL 2" />
             </div>
             <div className="flex flex-col items-center gap-2">
               <Button size="sm" className="w-full">
@@ -184,11 +157,11 @@ export function NexusPanel() {
 
           <div className="flex flex-col items-center justify-between gap-4 rounded-md border-2 border-slate-300 bg-slate-200/70 p-4">
             <div className="text-center">
-              <h2 className="font-bold">AMP.MODIFIER</h2>
+              <h2 className="font-bold">CONTROL SECTION</h2>
             </div>
             <div className="flex flex-1 flex-col justify-around">
-              <Knob label="PAN" />
-              <Knob label="VOLUME" />
+              <ControlButton label="CONTROL 3" />
+              <ControlButton label="CONTROL 4" />
             </div>
             <div className="flex flex-col items-center gap-2">
               <Button size="sm" className="w-full">
@@ -201,47 +174,47 @@ export function NexusPanel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-[1.5fr_3fr] gap-4 rounded-md border-2 border-t-4 border-slate-300 bg-slate-200/70 p-4">
+        <div className="grid grid-cols-[1.5fr_3fr] gap-4 rounded-md border-t-4 border-slate-300 bg-slate-200/70 p-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-center font-bold">FILTER MOD</h3>
-            <div className="grid grid-cols-3 justify-items-center gap-y-2 rounded-md border-2 border-slate-300 bg-slate-100 p-2">
-              <SmallKnob label="ATTACK" />
-              <SmallKnob label="DECAY" />
-              <SmallKnob label="SUSTAIN" />
-              <SmallKnob label="RELEASE" />
-              <SmallKnob label="CUTOFF" />
-              <SmallKnob label="RESO" />
+            <h3 className="text-center font-bold">CONTROL SECTION</h3>
+            <div className="grid grid-cols-3 justify-items-center gap-y-4 rounded-md border-2 border-slate-300 bg-slate-100 p-2">
+              <SmallSwitch label="SWITCH 1" />
+              <SmallSwitch label="SWITCH 2" />
+              <SmallSwitch label="SWITCH 3" />
+              <SmallSwitch label="SWITCH 4" />
+              <SmallSwitch label="SWITCH 5" />
+              <SmallSwitch label="SWITCH 6" />
             </div>
           </div>
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-2">
-              <h3 className="text-center font-bold">DELAY</h3>
-              <div className="grid grid-cols-4 justify-items-center gap-x-4 gap-y-2 rounded-md border-2 border-slate-300 bg-slate-100 p-2">
-                <SmallKnob label="MIX" />
-                <SmallKnob label="FDBACK" />
-                <SmallKnob label="TIME" />
-                <SmallKnob label="MOD" />
-                <SmallKnob label="PAN" />
-                <SmallKnob label="LOWCUT" />
-                <SmallKnob label="HIGHCUT" />
+              <h3 className="text-center font-bold">CONTROL SECTION</h3>
+              <div className="grid grid-cols-4 justify-items-center gap-x-4 gap-y-4 rounded-md border-2 border-slate-300 bg-slate-100 p-2">
+                <SmallSwitch label="S1" />
+                <SmallSwitch label="S2" />
+                <SmallSwitch label="S3" />
+                <SmallSwitch label="S4" />
+                <SmallSwitch label="S5" />
+                <SmallSwitch label="S6" />
+                <SmallSwitch label="S7" />
                 <div />
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <h3 className="text-center font-bold">REVERB</h3>
-              <div className="grid grid-cols-4 justify-items-center gap-x-4 gap-y-2 rounded-md border-2 border-slate-300 bg-slate-100 p-2">
-                <SmallKnob label="MIX" />
-                <SmallKnob label="DECAY" />
-                <SmallKnob label="SIZE" />
-                <SmallKnob label="MOD" />
-                <SmallKnob label="PAN" />
-                <SmallKnob label="LOWCUT" />
-                <SmallKnob label="HIGHCUT" />
+              <h3 className="text-center font-bold">CONTROL SECTION</h3>
+              <div className="grid grid-cols-4 justify-items-center gap-x-4 gap-y-4 rounded-md border-2 border-slate-300 bg-slate-100 p-2">
+                <SmallSwitch label="S8" />
+                <SmallSwitch label="S9" />
+                <SmallSwitch label="S10" />
+                <SmallSwitch label="S11" />
+                <SmallSwitch label="S12" />
+                <SmallSwitch label="S13" />
+                <SmallSwitch label="S14" />
                 <div />
               </div>
             </div>
             <div className="flex h-full items-center gap-4 pl-4">
-              <Fader label="OUTPUT" />
+              <FaderControl label="OUTPUT" />
               <div className="flex h-20 w-8 flex-col justify-between rounded-md border-2 border-slate-300 bg-slate-700 p-1">
                 <div className="h-1/3 w-full animate-pulse rounded-sm bg-blue-400" />
                 <div className="h-1/4 w-full animate-pulse rounded-sm bg-blue-300" />
