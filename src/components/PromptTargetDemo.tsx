@@ -45,7 +45,6 @@ export const PromptTargetDemo: React.FC<PromptTargetDemoProps> = ({ promptValue,
   };
 
   return (
-    <Card>
-    </Card>
+    null
   );
 };
