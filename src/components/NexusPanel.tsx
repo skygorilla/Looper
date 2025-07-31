@@ -24,7 +24,7 @@ const ControlButton = ({ label }: { label?: string }) => (
       <Settings size={20} />
     </Button>
     {label && (
-      <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+      <span className="text-xs font-semibold uppercase text-muted-foreground">
         {label}
       </span>
     )}
@@ -35,7 +35,7 @@ const SmallSwitch = ({ label }: { label?: string }) => (
     <div className="flex flex-col items-center gap-1">
        <Switch id={label?.toLowerCase().replace(' ','-')} />
       {label && (
-        <Label htmlFor={label?.toLowerCase().replace(' ','-')} className="text-[9px] font-medium uppercase text-muted-foreground">
+        <Label htmlFor={label?.toLowerCase().replace(' ','-')} className="text-xs font-medium uppercase text-muted-foreground">
           {label}
         </Label>
       )}
@@ -45,30 +45,30 @@ const SmallSwitch = ({ label }: { label?: string }) => (
 const Screen = () => (
   <div className="h-56 w-full max-w-md rounded-md border-2 border-border bg-background p-3 text-primary shadow-inner-lg">
     <div className="flex h-full flex-col">
-      <div className="grid grid-cols-3 items-center border-b border-b-border/50 pb-1 font-mono text-sm">
+      <div className="grid grid-cols-3 items-center border-b border-b-border/50 pb-1 font-mono text-xs">
         <div className="flex items-center gap-1 text-primary/80">
-          <Folder size={16} /> Placeholder
+          <Folder size={14} /> Placeholder
         </div>
-        <div className="text-center text-lg font-bold">PLACEHOLDER</div>
+        <div className="text-center font-bold">PLACEHOLDER</div>
         <div className="flex items-center justify-end gap-1 text-primary/80">
           Placeholder <div className="h-3 w-3 rounded-full bg-muted" />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
-        <div className="grid grid-cols-2 gap-4 font-code text-sm">
+        <div className="grid grid-cols-2 gap-4 font-code text-xs">
           <ul className="space-y-1">
             <li className="flex items-center gap-2">
-              <ChevronRight size={16} /> Placeholder Item
+              <ChevronRight size={14} /> Placeholder Item
             </li>
             <li className="flex items-center gap-2 text-primary/70">
-              <ChevronRight size={16} /> Placeholder Item
+              <ChevronRight size={14} /> Placeholder Item
             </li>
             <li className="flex items-center gap-2 bg-primary/20 text-white">
-              <ChevronRight size={16} />{' '}
+              <ChevronRight size={14} />{' '}
               <span className="font-bold">Placeholder Item</span>
             </li>
             <li className="flex items-center gap-2 text-primary/70">
-              <ChevronRight size={16} /> Placeholder Item
+              <ChevronRight size={14} /> Placeholder Item
             </li>
           </ul>
           <ul className="space-y-1">
@@ -80,7 +80,7 @@ const Screen = () => (
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-t-border/50 pt-2 font-mono">
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-xs">
           <div className="rounded bg-muted px-2 py-1">
             <span>Placeholder Text</span>
           </div>
@@ -105,7 +105,7 @@ export function NexusPanel() {
       <CardContent className="p-0">
         <div className="flex items-center justify-between border-b-2 border-b-border pb-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold uppercase tracking-wider">
+            <h1 className="text-lg font-bold uppercase tracking-wider">
               Placeholder
             </h1>
             <Badge variant="outline">Placeholder Text</Badge>
@@ -124,7 +124,7 @@ export function NexusPanel() {
         <div className="grid grid-cols-[1fr_2.5fr_1fr] gap-4 py-4">
           <div className="flex flex-col items-center justify-between gap-4 rounded-md border-2 border-border bg-card/70 p-4">
             <div className="text-center">
-              <h2 className="font-bold">CONTROL SECTION</h2>
+              <h2 className="text-sm font-bold">CONTROL SECTION</h2>
             </div>
             <div className="flex flex-1 flex-col justify-around">
               <ControlButton label="CONTROL 1" />
@@ -144,7 +144,7 @@ export function NexusPanel() {
 
           <div className="flex flex-col items-center justify-between gap-4 rounded-md border-2 border-border bg-card/70 p-4">
             <div className="text-center">
-              <h2 className="font-bold">CONTROL SECTION</h2>
+              <h2 className="text-sm font-bold">CONTROL SECTION</h2>
             </div>
             <div className="flex flex-1 flex-col justify-around">
               <ControlButton label="CONTROL 3" />
@@ -163,7 +163,7 @@ export function NexusPanel() {
 
         <div className="grid grid-cols-[1.5fr_3fr] gap-4 rounded-md border-t-4 border-border bg-card/70 p-4">
           <div className="flex flex-col gap-2">
-            <h3 className="text-center font-bold">CONTROL SECTION</h3>
+            <h3 className="text-sm text-center font-bold">CONTROL SECTION</h3>
             <div className="grid grid-cols-3 justify-items-center gap-y-4 rounded-md border-2 border-border bg-background p-2">
               <SmallSwitch label="SWITCH 1" />
               <SmallSwitch label="SWITCH 2" />
@@ -175,7 +175,7 @@ export function NexusPanel() {
           </div>
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-2">
-              <h3 className="text-center font-bold">CONTROL SECTION</h3>
+              <h3 className="text-sm text-center font-bold">CONTROL SECTION</h3>
               <div className="grid grid-cols-4 justify-items-center gap-x-4 gap-y-4 rounded-md border-2 border-border bg-background p-2">
                 <SmallSwitch label="S1" />
                 <SmallSwitch label="S2" />
@@ -188,7 +188,7 @@ export function NexusPanel() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <h3 className="text-center font-bold">CONTROL SECTION</h3>
+              <h3 className="text-sm text-center font-bold">CONTROL SECTION</h3>
               <div className="grid grid-cols-4 justify-items-center gap-x-4 gap-y-4 rounded-md border-2 border-border bg-background p-2">
                 <SmallSwitch label="S8" />
                 <SmallSwitch label="S9" />
