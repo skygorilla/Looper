@@ -46,20 +46,7 @@ export const PromptTargetDemo: React.FC<PromptTargetDemoProps> = ({ promptValue,
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-primary" />
-          Prompt Injection Target
-          <Badge variant="secondary" className="ml-auto">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Active
-          </Badge>
-        </CardTitle>
-        <CardDescription>
-          This textarea simulates the target element where prompts are injected.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         <div className="relative">
           <Textarea
             id="starterPrompt"
