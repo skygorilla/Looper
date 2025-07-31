@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { 
   Shield, 
   CheckCircle, 
@@ -39,11 +40,12 @@ interface TabProps {
   description: string;
   children?: React.ReactNode;
   onClick: (id: string) => void;
+  onMouseEnter: () => void;
   isActive: boolean;
   className?: string;
 }
 
-const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children, onClick, isActive, className }) => {
+const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children, onClick, onMouseEnter, isActive, className }) => {
   return (
     <div
       className={cn(
@@ -52,6 +54,7 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children,
         className
       )}
       onClick={() => onClick(id)}
+      onMouseEnter={onMouseEnter}
     >
       <div className="flex items-center justify-center w-14 h-14">
         <Icon size={24} className={cn("text-slate-400 transition-opacity", isActive && "opacity-0")} />
@@ -84,13 +87,15 @@ const MainPanel = ({
     <div className="w-full max-w-sm h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans">
       <div className="text-center mb-6">
         <div className="grid grid-cols-3 items-center h-6 mb-3">
-          <div className="justify-self-end">
-            {isThinking && <LoaderCircle size={24} className="animate-spin text-primary" />}
-          </div>
-          <div className={cn("text-white font-semibold transition-all", isRunning && "animate-glow")}>LOOPER</div>
-          <div className="justify-self-start">
-            {!isThinking && <div className="text-2xl animate-pulse-subtle">⚡</div>}
-          </div>
+            <div className="justify-self-end">
+                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-spin"/>}
+            </div>
+            <div className={cn("text-white font-semibold transition-all justify-self-center", isRunning && "animate-glow")}>
+                 <Image id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/loopr_on.svg?updatedAt=1753268249873" : "https://ik.imagekit.io/oe3ifd1ja/Vector/loopr_off.svg?updatedAt=1753268231332"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
+            </div>
+            <div className="justify-self-start">
+              {!isThinking && <div className="text-2xl animate-pulse-subtle">⚡</div>}
+            </div>
         </div>
         <div className="text-xs uppercase tracking-wider text-slate-400">{statusText}</div>
       </div>
@@ -159,7 +164,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
 
-  // Tab beep sound function
+  // Deep pleasant beep for tab open/close
   const playTabBeep = () => {
     try {
       if (typeof window !== 'undefined' && window.AudioContext) {
@@ -167,15 +172,40 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = 'sine';
-        o.frequency.value = 120;
-        g.gain.value = 0.11;
+        o.frequency.value = 164; // E3
+        g.gain.setValueAtTime(0.13, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
         o.connect(g).connect(ctx.destination);
         o.start();
-        o.stop(ctx.currentTime + 0.13);
-        o.onended = () => ctx.close();
+        o.stop(ctx.currentTime + 0.16);
+        o.onended = () => ctx.close().catch(() => {});
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Audio could not play', e);
+    }
   };
+
+  // Tiny, short beep for tab hover
+  const playTabHoverBeep = () => {
+     try {
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = 1568; // G6
+        g.gain.setValueAtTime(0.07, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+        o.connect(g).connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 0.07);
+        o.onended = () => ctx.close().catch(() => {});
+      }
+    } catch (e) {
+       console.error('Audio could not play', e);
+    }
+  };
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -371,12 +401,13 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     ]
   };
 
-  const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'isActive'>[]) => 
+  const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'onMouseEnter' | 'isActive'>[]) => 
     tabData.map(tab => 
       <Tab 
         key={tab.id} 
         {...tab} 
         onClick={handleTabClick} 
+        onMouseEnter={playTabHoverBeep}
         isActive={activeTab === tab.id}
         className={cn(
           (tab.id === 'console' || tab.id === 'issues') && activeTab === tab.id && "w-80 h-96",
@@ -429,5 +460,3 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     </div>
   );
 };
-
-    
