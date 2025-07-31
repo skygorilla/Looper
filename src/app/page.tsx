@@ -1,7 +1,9 @@
+import { NexusPanel } from '@/components/NexusPanel';
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div style={{ width: '400px', height: '200px', backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)' }}></div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-green-200 via-blue-200 to-purple-200">
+      <NexusPanel />
     </main>
   );
 }
