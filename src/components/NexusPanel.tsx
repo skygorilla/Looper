@@ -42,19 +42,6 @@ const SmallSwitch = ({ label }: { label?: string }) => (
     </div>
   );
 
-const FaderControl = ({ label }: { label?: string }) => (
-    <div className="flex flex-col items-center gap-1">
-        <div className="h-20 w-2 rounded-full bg-slate-300 relative">
-            <Button className="h-4 w-4 rounded-full bg-blue-400 absolute" style={{top: '33%', left: '-6px'}}/>
-        </div>
-        {label && (
-          <span className="text-[10px] font-semibold uppercase text-slate-500">
-            {label}
-          </span>
-        )}
-      </div>
-);
-
 const Screen = () => (
   <div className="h-56 w-full max-w-md rounded-md border-2 border-slate-300 bg-slate-800 p-3 text-cyan-300 shadow-inner-lg">
     <div className="flex h-full flex-col">
@@ -215,11 +202,6 @@ export function NexusPanel() {
             </div>
             <div className="flex h-full items-center gap-4 pl-4">
               
-              <div className="flex h-20 w-8 flex-col justify-between rounded-md border-2 border-slate-300 bg-slate-700 p-1">
-                <div className="h-1/3 w-full animate-pulse rounded-sm bg-blue-400" />
-                <div className="h-1/4 w-full animate-pulse rounded-sm bg-blue-300" />
-                <div className="h-1/2 w-full animate-pulse rounded-sm bg-red-500" />
-              </div>
             </div>
           </div>
         </div>
