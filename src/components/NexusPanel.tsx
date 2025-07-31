@@ -3,7 +3,6 @@
 import {
   ArrowDown,
   ArrowUp,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -105,10 +104,10 @@ export function NexusPanel() {
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row items-center justify-between border-b-2 border-b-border pb-2 gap-2 sm:gap-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-md sm:text-lg font-bold uppercase tracking-wider">
+            <h1 className="text-lg font-bold uppercase tracking-wider">
               Looper
             </h1>
-            <Badge variant="outline">Looper Text</Badge>
+            <Badge variant="outline">auto prompter</Badge>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -126,11 +125,11 @@ export function NexusPanel() {
             <div className="text-center">
               <h2 className="text-sm font-bold">CONTROL SECTION</h2>
             </div>
-            <div className="flex flex-row md:flex-col flex-1 justify-around w-full">
+            <div className="flex flex-1 justify-around w-full md:flex-col">
               <ControlButton label="CONTROL 1" />
               <ControlButton label="CONTROL 2" />
             </div>
-            <div className="flex flex-row md:flex-col items-center gap-2 w-full">
+            <div className="flex w-full flex-row items-center gap-2 md:flex-col">
               <Button size="sm" className="w-full">
                 <ArrowUp size={16} />
               </Button>
@@ -146,11 +145,11 @@ export function NexusPanel() {
             <div className="text-center">
               <h2 className="text-sm font-bold">CONTROL SECTION</h2>
             </div>
-            <div className="flex flex-row md:flex-col flex-1 justify-around w-full">
+            <div className="flex flex-1 justify-around w-full md:flex-col">
               <ControlButton label="CONTROL 3" />
               <ControlButton label="CONTROL 4" />
             </div>
-            <div className="flex flex-row md:flex-col items-center gap-2 w-full">
+            <div className="flex w-full flex-row items-center gap-2 md:flex-col">
               <Button size="sm" className="w-full">
                 <ArrowUp size={16} />
               </Button>
@@ -161,10 +160,10 @@ export function NexusPanel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_3fr] gap-4 rounded-md border-t-4 border-border bg-card/70 p-2 sm:p-4">
+        <div className="grid grid-cols-1 gap-4 rounded-md border-t-4 border-border bg-card/70 p-2 sm:p-4 lg:grid-cols-[1.5fr_3fr]">
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm text-center font-bold">CONTROL SECTION</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 justify-items-center gap-y-4 rounded-md border-2 border-border bg-background p-2">
+            <h3 className="text-center text-sm font-bold">CONTROL SECTION</h3>
+            <div className="grid grid-cols-2 justify-items-center gap-y-4 rounded-md border-2 border-border bg-background p-2 sm:grid-cols-3">
               <SmallSwitch label="SWITCH 1" />
               <SmallSwitch label="SWITCH 2" />
               <SmallSwitch label="SWITCH 3" />
@@ -173,10 +172,10 @@ export function NexusPanel() {
               <SmallSwitch label="SWITCH 6" />
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-            <div className="flex flex-col gap-2 w-full">
-              <h3 className="text-sm text-center font-bold">CONTROL SECTION</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 justify-items-center gap-x-2 sm:gap-x-4 gap-y-4 rounded-md border-2 border-border bg-background p-2">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
+            <div className="flex w-full flex-col gap-2">
+              <h3 className="text-center text-sm font-bold">CONTROL SECTION</h3>
+              <div className="grid grid-cols-2 justify-items-center gap-x-2 gap-y-4 rounded-md border-2 border-border bg-background p-2 sm:grid-cols-4 sm:gap-x-4">
                 <SmallSwitch label="S1" />
                 <SmallSwitch label="S2" />
                 <SmallSwitch label="S3" />
@@ -187,9 +186,9 @@ export function NexusPanel() {
                 <div />
               </div>
             </div>
-            <div className="flex flex-col gap-2 w-full">
-              <h3 className="text-sm text-center font-bold">CONTROL SECTION</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 justify-items-center gap-x-2 sm:gap-x-4 gap-y-4 rounded-md border-2 border-border bg-background p-2">
+            <div className="flex w-full flex-col gap-2">
+              <h3 className="text-center text-sm font-bold">CONTROL SECTION</h3>
+              <div className="grid grid-cols-2 justify-items-center gap-x-2 gap-y-4 rounded-md border-2 border-border bg-background p-2 sm:grid-cols-4 sm:gap-x-4">
                 <SmallSwitch label="S8" />
                 <SmallSwitch label="S9" />
                 <SmallSwitch label="S10" />
