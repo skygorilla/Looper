@@ -17,79 +17,196 @@ import {
   Square,
   Repeat,
   Clock,
-  Globe
+  Globe,
+  Trash2,
+  Upload
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 interface LooperAutopilotAdvancedProps {
   className?: string;
+  starterPrompt: string;
+  setStarterPrompt: (value: string) => void;
 }
 
-export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = ({ className }) => {
+interface TabProps {
+  id: string;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  children?: React.ReactNode;
+  onClick: (id: string) => void;
+  isActive: boolean;
+  className?: string;
+}
+
+const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children, onClick, isActive, className }) => {
+  return (
+    <div
+      className={cn(
+        "relative cursor-pointer transition-all duration-400 ease-in-out",
+        isActive ? "z-20 rounded-2xl bg-[hsl(var(--card))] shadow-lg overflow-hidden" : "z-10 flex items-center justify-center rounded-full bg-slate-800 w-14 h-14 hover:scale-110",
+        className
+      )}
+      onClick={() => onClick(id)}
+    >
+      <div className="flex items-center justify-center w-14 h-14">
+        <Icon size={24} className={cn("text-slate-400 transition-opacity", isActive && "opacity-0")} />
+      </div>
+      {isActive && (
+        <div className="absolute inset-0 opacity-100 transition-opacity duration-300 delay-200 p-6 flex flex-col items-center text-center">
+          <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+          <div className="text-slate-400 text-sm">{children || description}</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+const MainPanel = ({
+  sessionCount,
+  totalCount,
+  statusText,
+  isRunning,
+  isThinking,
+  handleStart,
+  handlePause,
+  handleReset,
+  starterPrompt,
+  setStarterPrompt,
+  handleInjectPrompt
+}: any) => {
+  return (
+    <div className="w-full max-w-sm h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans">
+      <div className="text-center mb-6">
+        <div className="grid grid-cols-3 items-center h-6 mb-3">
+          <div className="justify-self-end">
+            {isThinking && <div className="animate-spin text-2xl">🤔</div>}
+          </div>
+          <div className="text-white font-semibold">LOOPER</div>
+          <div className="justify-self-start">
+            {!isThinking && <div className="text-2xl">⚡</div>}
+          </div>
+        </div>
+        <div className="text-xs uppercase tracking-wider text-slate-400">{statusText}</div>
+      </div>
+      
+      <div className="bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] rounded-2xl p-5 mb-6 shadow-[inset_14px_14px_40px_rgba(16,16,18,0.75),inset_-7px_-7px_30px_#262E32]">
+        <div className="flex justify-around items-center">
+          <div className="text-center">
+            <div className="text-xs uppercase text-slate-400 tracking-wider">Session</div>
+            <div className="text-2xl font-semibold text-white">{sessionCount}</div>
+          </div>
+          <div className="w-0.5 h-8 bg-gradient-to-b from-[#16171B] to-[#353A40] rounded-full"/>
+          <div className="text-center">
+            <div className="text-xs uppercase text-slate-400 tracking-wider">Total</div>
+            <div className="text-2xl font-semibold text-white">{totalCount}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-5">
+        <div className="flex gap-2.5 mb-3">
+          <Button onClick={handleStart} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+            {isRunning ? <Square size={20} className="text-green-500" /> : <Play size={20} className="text-green-500" />}
+          </Button>
+          <Button onClick={handlePause} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+            <Pause size={20} className="text-yellow-500" />
+          </Button>
+          <Button onClick={handleReset} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+            <Repeat size={20} className="text-red-500" />
+          </Button>
+        </div>
+      </div>
+      
+      <textarea 
+        className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16_18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        value={starterPrompt}
+        onChange={(e) => setStarterPrompt(e.target.value)}
+        placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
+        spellCheck={false}
+      />
+
+      <div className="flex gap-2.5">
+        <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+          <Zap size={20} className="text-blue-400" />
+        </Button>
+      </div>
+
+      <div className="text-center text-xs text-slate-500 mt-auto">
+        Looper Autopilot v1.3.0 - Smart Edition
+      </div>
+    </div>
+  )
+}
+
+export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = ({ className, starterPrompt, setStarterPrompt }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [starterPrompt, setStarterPrompt] = useState('🤖 Smart Analysis Mode: Analyzing current page context...');
   const [consoleEntries, setConsoleEntries] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
-  const [siteMapData, setSiteMapData] = useState<any[]>([]);
   const [prototyperStatus, setPrototyperStatus] = useState('System Ready');
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
 
-  const prototyperScreenRef = useRef<HTMLDivElement>(null);
-
   // Tab beep sound function
   const playTabBeep = () => {
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.value = 120;
-      g.gain.value = 0.11;
-      o.connect(g).connect(ctx.destination);
-      o.start();
-      o.stop(ctx.currentTime + 0.13);
-      o.onended = () => ctx.close();
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 120;
+        g.gain.value = 0.11;
+        o.connect(g).connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 0.13);
+        o.onended = () => ctx.close();
+      }
     } catch (e) {}
   };
 
-  // Initialize data on mount from localStorage
   useEffect(() => {
-    setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
-    setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
-    
-    // Load console entries
-    const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
-    setConsoleEntries(savedEntries);
+    if (typeof window !== 'undefined') {
+      setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
+      setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
+      const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
+      setConsoleEntries(savedEntries);
+    }
 
-    // Initialize issues
     setIssues([
       { type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }
     ]);
 
-    // Update prototyper status based on page
     const updateStatus = () => {
-      const currentUrl = window.location.href;
-      if (currentUrl.startsWith('file:')) {
-        setPrototyperStatus('Prototyper Status: Local Preview Mode');
-      } else {
-        setPrototyperStatus('Prototyper Status: System Ready');
+       if (typeof window !== 'undefined') {
+        const currentUrl = window.location.href;
+        if (currentUrl.startsWith('file:')) {
+          setPrototyperStatus('Prototyper Status: Local Preview Mode');
+        } else {
+          setPrototyperStatus('Prototyper Status: System Ready');
+        }
       }
     };
-
     updateStatus();
-  }, []);
+  }, [setStarterPrompt]);
 
-  // Save to localStorage when values change
   useEffect(() => {
-    localStorage.setItem('looper-total-count', totalCount.toString());
+     if (typeof window !== 'undefined') {
+      localStorage.setItem('looper-total-count', totalCount.toString());
+     }
   }, [totalCount]);
 
   useEffect(() => {
-    localStorage.setItem('starterPrompt', starterPrompt);
+     if (typeof window !== 'undefined') {
+      localStorage.setItem('starterPrompt', starterPrompt);
+     }
   }, [starterPrompt]);
 
   const handleTabClick = (tabId: string) => {
@@ -105,7 +222,6 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
       setStatusText('Processing...');
       setIsThinking(true);
       
-      // Add console entry
       const newEntry = {
         timestamp: Date.now(),
         level: 'log',
@@ -121,11 +237,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
 
   const handlePause = () => {
     setIsPaused(!isPaused);
-    if (!isPaused) {
-      setStatusText('Paused');
-    } else {
-      setStatusText('Processing...');
-    }
+    setStatusText(isPaused ? 'Processing...' : 'Paused');
   };
 
   const handleReset = () => {
@@ -146,18 +258,23 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
       message: `Injecting prompt: ${starterPrompt.substring(0, 50)}...`
     };
     setConsoleEntries(prev => [newEntry, ...prev]);
+    const target = document.getElementById('starterPrompt') as HTMLTextAreaElement;
+    if (target) {
+        target.value = starterPrompt;
+    }
   };
 
   const captureIssues = () => {
-    const newIssues = [
+    setIssues([
       { type: 'info', message: 'No issues detected. Page appears to be functioning correctly.' }
-    ];
-    setIssues(newIssues);
+    ]);
   };
 
   const clearConsole = () => {
     setConsoleEntries([]);
-    localStorage.removeItem('logEntries');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('logEntries');
+    }
   };
 
   const exportConsole = () => {
@@ -171,842 +288,118 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     link.click();
   };
 
+  const TABS = {
+    top: [
+      { id: 'audit', icon: Shield, title: "Audit", description: "Audit your app for issues." },
+      { id: 'design-system', icon: CheckCircle, title: "Design System", description: "Insert design/dev directives." },
+      { id: 'monitor', icon: Monitor, title: "Monitor", description: "Show project health dashboard." },
+      { id: 'ai-maintenance', icon: Plus, title: "AI Maintenance", description: "Insert AI maintenance prompt." },
+      { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts." },
+    ],
+    left: [
+      { id: 'console', icon: Terminal, title: "Console", description: "View system console output.", children: (
+        <div className="w-full h-full flex flex-col text-left">
+          <div className="flex gap-2 mb-2">
+            <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
+            <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs"><Upload className="mr-1 h-3 w-3" /> Export</Button>
+          </div>
+          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+            {consoleEntries.slice(0, 20).map((entry, index) => (
+              <div key={index} className={`flex items-start gap-2 text-slate-400`}>
+                <span className="text-slate-500">[{new Date(entry.timestamp).toLocaleTimeString()}]</span>
+                <span className={cn(
+                  entry.level === 'log' && 'text-slate-300',
+                  entry.level === 'api' && 'text-cyan-400',
+                )}>[{entry.level}] {entry.message}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) },
+      { id: 'issues', icon: AlertTriangle, title: "Issues", description: "DevTools-style issue detection.", children: (
+         <div className="w-full h-full flex flex-col text-left">
+           <div className="flex gap-2 mb-2">
+            <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs">Capture Issues</Button>
+           </div>
+           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+             {issues.map((issue, index) => (
+                <div key={index} className={cn("flex items-start gap-2 p-1 rounded", 
+                  issue.type === 'info' && 'bg-blue-900/30 text-blue-300',
+                  issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300',
+                  issue.type === 'error' && 'bg-red-900/30 text-red-300'
+                )}>
+                  <div className="font-bold uppercase">{issue.type}</div>
+                  <div>{issue.message}</div>
+                </div>
+              ))}
+           </div>
+         </div>
+      )},
+      { id: 'system', icon: Settings, title: "System Status", description: "View system information." },
+    ],
+    right: [
+      { id: 'history', icon: Clock, title: "History", description: "View prompt and action history." },
+      { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure." },
+    ],
+    bottom: [
+      { id: 'activity', icon: Activity, title: "Activity Log", description: "View system activity." },
+      { id: 'about', icon: Info, title: "About", description: "Information about the system." },
+    ]
+  };
+
+  const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'isActive'>[]) => 
+    tabData.map(tab => 
+      <Tab 
+        key={tab.id} 
+        {...tab} 
+        onClick={handleTabClick} 
+        isActive={activeTab === tab.id}
+        className={cn(
+          (tab.id === 'console' || tab.id === 'issues') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'console' && tab.id !== 'issues') && activeTab === tab.id && "w-96 h-52",
+        )}
+      />
+    );
+
+
   return (
-    <div className={`looper-autopilot-advanced ${className || ''} dark`}>
-      <style jsx>{`
-        .looper-autopilot-advanced {
-          --color-bg-main: #1a1b1e;
-          --color-bg-panel: #23263a;
-          --color-bg-card: #353A40;
-          --color-bg-dark: #16171B;
-          --color-accent-blue: #6366f1;
-          --color-accent-green: #10b981;
-          --color-accent-orange: #f59e0b;
-          --color-accent-red: #ef4444;
-          --color-accent-lightblue: #11A8FD;
-          --color-text-main: #fff;
-          --color-text-soft: #a5b4fc;
-          --color-text-muted: #A6B0C3;
-          --color-text-subtle: #7F8489;
-
-          display: grid;
-          grid-template-columns: auto auto auto auto;
-          grid-template-rows: auto auto auto auto;
-          gap: 20px;
-          align-items: center;
-          justify-items: center;
-          position: relative;
-          width: 100%;
-          max-width: 1400px;
-          padding: 20px;
-          transform: scale(0.8);
-          transition: transform 0.4s ease;
-          background: transparent;
-          min-height: 400px;
-          animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-          font-family: 'Inter', sans-serif;
-        }
-
-        @keyframes fadeInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.6);
-          }
-          to {
-            opacity: 1;
-            transform: scale(0.8);
-          }
-        }
-
-        .looper-autopilot-advanced::before {
-          content: '';
-          position: absolute;
-          top: -20px;
-          left: -20px;
-          right: -20px;
-          bottom: -20px;
-          background: radial-gradient(circle at center, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.1) 70%);
-          border-radius: 40px;
-          z-index: -1;
-          pointer-events: none;
-        }
-
-        .looper-autopilot-advanced:hover {
-          transform: scale(0.85);
-        }
-
-        .tab {
-          cursor: pointer;
-          color: var(--color-text-muted);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          user-select: none;
-          position: relative;
-          z-index: 2147483647;
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          background: linear-gradient(145deg, var(--color-bg-panel), #1A1D21);
-          min-width: 56px;
-          min-height: 56px;
-        }
-
-        .tab:hover:not(.expanded) {
-          transform: scale(1.1);
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .tab:active:not(.expanded) {
-          transform: scale(0.98);
-          background: linear-gradient(145deg, #1A1C1F 0%, var(--color-bg-panel) 100%);
-          transition: all 0.1s ease;
-        }
-
-        .tab.expanded {
-          z-index: 20;
-          border-radius: 24px;
-          background: linear-gradient(180deg, var(--color-bg-card) 0%, var(--color-bg-dark) 100%);
-          color: var(--color-text-main);
-          overflow: hidden;
-        }
-
-        .left-tabs .tab.expanded, .right-tabs .tab.expanded {
-          width: 336px;
-          height: 384px;
-        }
-
-        .top-tabs .tab.expanded {
-          width: 480px;
-          height: 216px;
-        }
-
-        .bottom-tabs .tab.expanded {
-          width: 480px;
-          height: 216px;
-        }
-
-        .tab-content {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          opacity: 0;
-          transform: scale(0.8);
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: flex-start;
-          text-align: left;
-          overflow: hidden;
-        }
-
-        .tab.expanded .tab-content {
-          opacity: 1;
-          transform: scale(1);
-        }
-
-        .tab-content h3 {
-          font-size: 1.44rem;
-          margin: 0 0 16px 0;
-          color: var(--color-text-main);
-          width: 100%;
-          text-align: center;
-          line-height: 1.3;
-        }
-
-        .tab-content p {
-          font-size: 1.2rem;
-          margin: 0 0 12px 0;
-          color: var(--color-text-subtle);
-          line-height: 1.5;
-        }
-
-        .left-tabs {
-          grid-column: 2;
-          grid-row: 2;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .right-tabs {
-          grid-column: 4;
-          grid-row: 2;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .top-tabs {
-          grid-column: 3;
-          grid-row: 1;
-          display: flex;
-          justify-content: center;
-          gap: 20px;
-          padding: 0 20px;
-        }
-
-        .bottom-tabs {
-          grid-column: 3;
-          grid-row: 3;
-          display: flex;
-          gap: 20px;
-        }
-
-        .prototyper-screen-container {
-          grid-column: 1;
-          grid-row: 1 / span 3;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          box-sizing: border-box;
-        }
-
-        .prototyper-screen {
-          width: 216px;
-          height: 264px;
-          background: #1A1C1F;
-          border-radius: 16px;
-          box-shadow: inset 5px 5px 10px rgba(0,0,0,0.5), inset -5px -5px 10px rgba(53,58,64,0.5);
-          padding: 15px;
-          overflow: hidden;
-          position: relative;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          color: var(--color-accent-green);
-          line-height: 1.4;
-          white-space: pre-wrap;
-          word-break: break-word;
-          transition: all 0.1s ease-out;
-        }
-
-        .simulated-toolui {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .sim-checkpoint {
-          background: rgba(255,255,255,0.05);
-          border-radius: 8px;
-          padding: 5px 8px;
-          border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sim-title {
-          font-weight: bold;
-          color: #fff;
-          font-size: 13px;
-        }
-
-        .sim-code {
-          font-size: 12px;
-          color: #A6B0C3;
-          margin-top: 2px;
-        }
-
-        .sim-file-changes {
-          margin-top: 5px;
-          font-size: 12px;
-        }
-
-        .sim-file {
-          display: flex;
-          justify-content: space-between;
-          color: #C3CFE2;
-          padding: 2px 0;
-        }
-
-        .sim-added { color: #1abc9c; font-weight: bold; }
-        .sim-removed { color: #e74c3c; font-weight: bold; }
-
-        .sim-message {
-          margin-top: auto;
-          color: #74B9FF;
-          font-size: 12px;
-          padding-top: 5px;
-          border-top: 1px dashed rgba(255,255,255,0.1);
-        }
-
-        .looper-panel {
-          grid-column: 3;
-          grid-row: 2;
-          width: 300px;
-          height: 652px;
-          padding: 28px;
-          border-radius: 60px;
-          background: linear-gradient(180deg, var(--color-bg-card) 0%, var(--color-bg-dark) 100%);
-          box-shadow: 0px 0px 100px rgba(0, 0, 0, 0.15);
-          box-sizing: border-box;
-          user-select: none;
-          position: relative;
-          font-family: "Inter", sans-serif;
-          overflow: visible;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-start;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .panel-header {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          margin-bottom: 24px;
-          cursor: move;
-          gap: 12px;
-          position: relative;
-          transition: opacity 0.2s ease;
-        }
-
-        .logo-placeholders {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          gap: 8px;
-          align-items: center;
-          width: 100%;
-          height: 24px;
-        }
-
-        .logo-spinner {
-          grid-column: 1;
-          justify-self: end;
-          width: 24px;
-          height: 24px;
-          visibility: ${isThinking ? 'visible' : 'hidden'};
-          animation: ${isThinking ? 'rotateThink 2s linear infinite' : 'none'};
-        }
-
-        @keyframes rotateThink {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        .logo-text {
-          grid-column: 2;
-          justify-self: center;
-          color: var(--color-text-main);
-          font-weight: 600;
-          font-size: 14px;
-        }
-
-        .status-icon {
-          grid-column: 3;
-          justify-self: start;
-          width: 24px;
-          height: 24px;
-          visibility: ${isThinking ? 'hidden' : 'visible'};
-        }
-
-        .status-text {
-          font-size: 12px;
-          color: var(--color-text-subtle);
-          font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .counters {
-          background: linear-gradient(138.69deg, #1F2328 0%, #1A1C1F 100%);
-          box-shadow: inset 14px 14px 40px rgba(16, 16, 18, 0.75), inset -7px -7px 30px #262E32;
-          border-radius: 16px;
-          padding: 20px;
-          margin-bottom: 24px;
-          text-align: center;
-          transition: opacity 0.2s ease;
-        }
-
-        .counter-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .counter-item {
-          text-align: center;
-        }
-
-        .counter-label {
-          font-size: 12px;
-          color: var(--color-text-subtle);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 4px;
-        }
-
-        .counter-value {
-          font-size: 24px;
-          font-weight: 600;
-          color: var(--color-text-main);
-        }
-
-        .counter-divider {
-          width: 2px;
-          height: 30px;
-          background: linear-gradient(to bottom, var(--color-bg-dark), var(--color-bg-card));
-          border-radius: 1px;
-        }
-
-        .controls-section {
-          margin-bottom: 20px;
-          transition: opacity 0.2s ease;
-        }
-
-        .button-row {
-          display: flex;
-          gap: 10px;
-          width: 100%;
-          margin-bottom: 12px;
-        }
-
-        .control-button {
-          flex: 1;
-          background: linear-gradient(138.69deg, #1F2328 0%, #1A1C1F 100%);
-          border: none;
-          border-radius: 14px;
-          padding: 14px;
-          box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
-          cursor: pointer;
-          font-size: 0;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .control-button:hover {
-          box-shadow: 6px 6px 12px rgba(0,0,0,0.7), -6px -6px 12px rgba(47,57,61,0.7);
-          transform: translateY(-1px);
-        }
-
-        .control-button:active {
-          box-shadow: inset 8px 8px 16px rgba(0,0,0,0.7), inset -8px -8px 16px rgba(47,57,61,0.7);
-          transform: translateY(0);
-        }
-
-        .starter-prompt {
-          width: 100%;
-          min-height: 100px;
-          flex-grow: 1;
-          padding: 16px;
-          border-radius: 16px;
-          background: linear-gradient(138.69deg, #1F2328 0%, #1A1C1F 100%);
-          box-shadow: inset 12px 12px 24px rgba(16, 16, 18, 0.75), inset -12px -12px 24px #262E32;
-          border: none;
-          overflow-y: auto;
-          resize: vertical;
-          color: var(--color-text-main);
-          font-size: 14px;
-          line-height: 1.4;
-          box-sizing: border-box;
-          font-family: inherit;
-          margin-bottom: 20px;
-          transition: opacity 0.2s ease;
-        }
-
-        .starter-prompt::placeholder {
-          color: var(--color-text-subtle);
-        }
-
-        .starter-prompt:focus {
-          outline: none;
-          box-shadow: inset 12px 12px 24px rgba(16, 16, 18, 0.75), inset -12px -12px 24px #262E32, 0 0 0 2px rgba(17, 168, 253, 0.5);
-        }
-
-        .secondary-controls {
-          display: flex;
-          gap: 10px;
-          transition: opacity 0.2s ease;
-        }
-
-        .secondary-controls button {
-          flex: 1;
-        }
-
-        .version-text {
-          font-size: 10px;
-          color: var(--color-text-subtle);
-          opacity: 0.6;
-          font-weight: 500;
-          text-align: center;
-          margin-top: 12px;
-          width: 100%;
-        }
-
-        .btn-primary svg { stroke: var(--color-accent-green); }
-        .btn-danger svg { stroke: var(--color-accent-red); }
-        .btn-warning svg { stroke: var(--color-accent-orange); }
-        .btn-secondary svg { stroke: var(--color-accent-lightblue); }
-
-        .console-content {
-          background: #1A1C1F;
-          border-radius: 12px;
-          padding: 16px;
-          height: 200px;
-          overflow-y: auto;
-          text-align: left;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 13px;
-          line-height: 1.6;
-        }
-
-        .log-entry {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          padding: 4px 0;
-          margin: 2px 0;
-          font-size: 12px;
-          line-height: 1.6;
-        }
-
-        .log-timestamp {
-          color: var(--color-text-subtle);
-          margin-right: 8px;
-        }
-
-        .log-info { color: #74B9FF; }
-        .log-log { color: var(--color-text-main); }
-        .log-warning { color: #FFD93D; }
-        .log-error { color: #FF6B6B; }
-        .log-api { color: #4ECDC4; }
-
-        .issues-content {
-          max-height: 200px;
-          overflow-y: auto;
-        }
-
-        .issue-entry {
-          display: flex;
-          align-items: flex-start;
-          padding: 8px 12px;
-          margin: 4px 0;
-          background: rgba(31, 35, 40, 0.5);
-          border-radius: 6px;
-          border-left: 3px solid;
-          font-size: 12px;
-          line-height: 1.4;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-
-        .issue-entry:hover {
-          background: rgba(31, 35, 40, 0.8);
-        }
-
-        .issue-entry.error {
-          border-left-color: var(--color-accent-red);
-          background: rgba(239, 68, 68, 0.1);
-        }
-
-        .issue-entry.warning {
-          border-left-color: var(--color-accent-orange);
-          background: rgba(245, 158, 11, 0.1);
-        }
-
-        .issue-entry.info {
-          border-left-color: var(--color-accent-lightblue);
-          background: rgba(17, 168, 253, 0.1);
-        }
-
-        .issue-type {
-          font-weight: 600;
-          text-transform: uppercase;
-          margin-right: 8px;
-          min-width: 50px;
-          font-size: 10px;
-          opacity: 0.8;
-        }
-
-        .issue-message {
-          color: var(--color-text-main);
-          word-wrap: break-word;
-          flex: 1;
-        }
-
-        .tab-buttons {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-        }
-
-        .tab-button {
-          font-size: 12px;
-          font-weight: 500;
-          padding: 8px 12px;
-          color: var(--color-text-main);
-          border-radius: 6px;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          background: linear-gradient(138.69deg, #1F2328 0%, #1A1C1F 100%);
-          box-shadow: 4px 4px 8px rgba(0,0,0,0.3), -4px -4px 8px rgba(47,57,61,0.3);
-        }
-
-        .tab-button:hover {
-          transform: translateY(-1px);
-          box-shadow: 6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(47,57,61,0.1);
-        }
-
-        .tab-button.capture {
-          border-left: 3px solid var(--color-accent-green);
-        }
-
-        .tab-button.export {
-          border-left: 3px solid var(--color-accent-orange);
-        }
-
-        .tab-button.clear {
-          border-left: 3px solid var(--color-accent-red);
-        }
-      `}</style>
-
-      {/* Top Tabs */}
-      <div className="top-tabs">
-        <div 
-          className={`tab ${activeTab === 'audit' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('audit')}
-        >
-          <Shield size={24} />
-          <div className="tab-content">
-            <h3>Audit</h3>
-            <p>Audit your app or project for issues and improvements.</p>
-          </div>
+    <div className={cn("relative flex justify-center items-center p-5 transform scale-90", className)}>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] grid-rows-1 gap-5 items-center">
+        {/* Left Column */}
+        <div className="hidden md:flex flex-col gap-5 justify-self-end">
+          {renderTabs(TABS.left)}
         </div>
-        <div 
-          className={`tab ${activeTab === 'design-system' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('design-system')}
-        >
-          <CheckCircle size={24} />
-          <div className="tab-content">
-            <h3>Design System</h3>
-            <p>Insert design/dev directives prompt.</p>
+        
+        {/* Center Column */}
+        <div className="flex flex-col items-center gap-5">
+           {/* Top Row */}
+          <div className="hidden md:flex flex-row gap-5">
+            {renderTabs(TABS.top)}
           </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'monitor' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('monitor')}
-        >
-          <Monitor size={24} />
-          <div className="tab-content">
-            <h3>Monitor</h3>
-            <p>Show project health/crash dashboard.</p>
-          </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'ai-maintenance' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('ai-maintenance')}
-        >
-          <Plus size={24} />
-          <div className="tab-content">
-            <h3>AI Maintenance</h3>
-            <p>Insert AI-powered maintenance prompt.</p>
-          </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'actions' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('actions')}
-        >
-          <Zap size={24} />
-          <div className="tab-content">
-            <h3>Actions</h3>
-            <p>Quick actions and shortcuts.</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Prototyper Screen */}
-      <div className="prototyper-screen-container">
-        <div className="prototyper-screen" ref={prototyperScreenRef}>
-          <div className="simulated-toolui">
-            <div className="sim-checkpoint">
-              <div className="sim-title">{prototyperStatus}</div>
-              <div className="sim-code">Analyzing current environment...</div>
-            </div>
-            <div className="sim-file-changes">
-              <div className="sim-file">_activity.log <span className="sim-added">+{consoleEntries.length}</span></div>
-            </div>
-            <div className="sim-message">System initialized. Ready for automation tasks.</div>
-          </div>
-        </div>
-      </div>
+          <MainPanel 
+            sessionCount={sessionCount}
+            totalCount={totalCount}
+            statusText={statusText}
+            isRunning={isRunning}
+            isThinking={isThinking}
+            handleStart={handleStart}
+            handlePause={handlePause}
+            handleReset={handleReset}
+            starterPrompt={starterPrompt}
+            setStarterPrompt={setStarterPrompt}
+            handleInjectPrompt={handleInjectPrompt}
+          />
 
-      {/* Left Tabs */}
-      <div className="left-tabs">
-        <div 
-          className={`tab ${activeTab === 'console' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('console')}
-        >
-          <Terminal size={24} />
-          <div className="tab-content">
-            <h3>🖥️ Console</h3>
-            <div className="tab-buttons">
-              <button className="tab-button clear" onClick={clearConsole}>🗑️ Clear</button>
-              <button className="tab-button export" onClick={exportConsole}>📤 Export</button>
-            </div>
-            <div className="console-content">
-              {consoleEntries.slice(0, 20).map((entry, index) => (
-                <div key={index} className={`log-entry log-${entry.level}`}>
-                  <span className="log-timestamp">
-                    [{new Date(entry.timestamp).toLocaleTimeString('en-US', { 
-                      hour12: false, 
-                      hour: '2-digit', 
-                      minute: '2-digit', 
-                      second: '2-digit', 
-                      fractionalSecondDigits: 3 
-                    })}]
-                  </span>
-                  <span>[{entry.level}] {entry.message}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'issues' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('issues')}
-        >
-          <AlertTriangle size={24} />
-          <div className="tab-content">
-            <h3>Issues</h3>
-            <div className="tab-buttons">
-              <button className="tab-button capture" onClick={captureIssues}>📋 Capture Issues</button>
-            </div>
-            <div className="issues-content">
-              {issues.map((issue, index) => (
-                <div key={index} className={`issue-entry ${issue.type}`}>
-                  <div className="issue-type">{issue.type}</div>
-                  <div className="issue-message">{issue.message}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'system' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('system')}
-        >
-          <Settings size={24} />
-          <div className="tab-content">
-            <h3>System Status</h3>
-            <p>View system information and status.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Looper Panel */}
-      <div className="looper-panel">
-        <div className="panel-header">
-          <div className="logo-placeholders">
-            <div className="logo-spinner">🤔</div>
-            <div className="logo-text">LOOPER</div>
-            <div className="status-icon">⚡</div>
-          </div>
-          <span className="status-text">{statusText}</span>
-        </div>
-
-        <div className="counters">
-          <div className="counter-row">
-            <div className="counter-item">
-              <div className="counter-label">Session</div>
-              <div className="counter-value">{sessionCount}</div>
-            </div>
-            <div className="counter-divider"></div>
-            <div className="counter-item">
-              <div className="counter-label">Total</div>
-              <div className="counter-value">{totalCount}</div>
-            </div>
+          {/* Bottom Row */}
+          <div className="hidden md:flex flex-row gap-5">
+            {renderTabs(TABS.bottom)}
           </div>
         </div>
 
-        <div className="controls-section">
-          <div className="button-row">
-            <button className="control-button btn-primary" onClick={handleStart}>
-              {isRunning ? <Square size={20} /> : <Play size={20} />}
-            </button>
-            <button className="control-button btn-warning" onClick={handlePause}>
-              <Pause size={20} />
-            </button>
-            <button className="control-button btn-danger" onClick={handleReset}>
-              <Repeat size={20} />
-            </button>
-          </div>
-        </div>
-
-        <textarea 
-          id="starterPrompt"
-          className="starter-prompt"
-          value={starterPrompt}
-          onChange={(e) => setStarterPrompt(e.target.value)}
-          placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
-          spellCheck={false}
-        />
-
-        <div className="secondary-controls">
-          <button className="control-button btn-secondary" onClick={handleInjectPrompt}>
-            <Zap size={20} />
-          </button>
-        </div>
-
-        <div className="version-text">Looper Autopilot v1.3.0 - Smart Edition</div>
-      </div>
-
-      {/* Right Tabs */}
-      <div className="right-tabs">
-        <div 
-          className={`tab ${activeTab === 'history' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('history')}
-        >
-          <Clock size={24} />
-          <div className="tab-content">
-            <h3>History</h3>
-            <p>View prompt and action history.</p>
-          </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'sitemap' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('sitemap')}
-        >
-          <Globe size={24} />
-          <div className="tab-content">
-            <h3>Site Map</h3>
-            <p>Navigate site structure and pages.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Tabs */}
-      <div className="bottom-tabs">
-        <div 
-          className={`tab ${activeTab === 'activity' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('activity')}
-        >
-          <Activity size={24} />
-          <div className="tab-content">
-            <h3>Activity Log</h3>
-            <p>View system activity and events.</p>
-          </div>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'about' ? 'expanded' : ''}`}
-          onClick={() => handleTabClick('about')}
-        >
-          <Info size={24} />
-          <div className="tab-content">
-            <h3>About Prototyper Autopilot</h3>
-            <p>Information about the system and features.</p>
-          </div>
+        {/* Right Column */}
+        <div className="hidden md:flex flex-col gap-5 justify-self-start">
+          {renderTabs(TABS.right)}
         </div>
       </div>
     </div>

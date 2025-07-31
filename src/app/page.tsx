@@ -1,7 +1,12 @@
+'use client';
+
 import { LooperAutopilotAdvanced } from '@/components/LooperAutopilotAdvanced';
 import { PromptTargetDemo } from '@/components/PromptTargetDemo';
-
+import { useState }
+ from 'react';
 export default function Home() {
+  const [starterPrompt, setStarterPrompt] = useState('🤖 Smart Analysis Mode: Analyzing current page context...');
+
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-start gap-8 p-4 sm:p-8 md:p-12 lg:p-16">
       <div className="w-full max-w-7xl">
@@ -12,12 +17,12 @@ export default function Home() {
           An advanced monitoring panel for web development. Use the switches and buttons on the Looper Autopilot to display data and interact with the prompt target below.
         </p>
       </div>
-      <div className="flex w-full max-w-7xl flex-col lg:flex-row gap-8 items-start">
-        <div className="w-full lg:w-2/3 xl:w-3/4">
-          <LooperAutopilotAdvanced />
+      <div className="flex w-full max-w-screen-2xl flex-col lg:flex-row gap-8 items-start">
+        <div className="w-full">
+           <LooperAutopilotAdvanced starterPrompt={starterPrompt} setStarterPrompt={setStarterPrompt} />
         </div>
-        <div className="w-full lg:w-1/3 xl:w-1/4">
-          <PromptTargetDemo />
+        <div className="w-full lg:max-w-md">
+          <PromptTargetDemo promptValue={starterPrompt} setPromptValue={setStarterPrompt} />
         </div>
       </div>
     </main>
