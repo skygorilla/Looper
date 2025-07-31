@@ -62,7 +62,7 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children,
       {isActive && (
         <div className="absolute inset-0 opacity-100 transition-opacity duration-300 delay-200 p-6 flex flex-col items-center text-center">
           <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-          <div className="text-slate-400 text-sm">{children || description}</div>
+          <div className="text-slate-400 text-sm w-full h-full">{children || description}</div>
         </div>
       )}
     </div>
@@ -158,7 +158,6 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   const [totalCount, setTotalCount] = useState(0);
   const [consoleEntries, setConsoleEntries] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
-  const [prototyperStatus, setPrototyperStatus] = useState('System Ready');
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
   const isRunningRef = useRef(isRunning);
@@ -218,18 +217,6 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     setIssues([
       { type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }
     ]);
-
-    const updateStatus = () => {
-       if (typeof window !== 'undefined') {
-        const currentUrl = window.location.href;
-        if (currentUrl.startsWith('file:')) {
-          setPrototyperStatus('Prototyper Status: Local Preview Mode');
-        } else {
-          setPrototyperStatus('Prototyper Status: System Ready');
-        }
-      }
-    };
-    updateStatus();
   }, [setStarterPrompt]);
 
   useEffect(() => {
@@ -241,8 +228,9 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   useEffect(() => {
      if (typeof window !== 'undefined') {
       localStorage.setItem('starterPrompt', starterPrompt);
+      localStorage.setItem('logEntries', JSON.stringify(consoleEntries));
      }
-  }, [starterPrompt]);
+  }, [starterPrompt, consoleEntries]);
 
   const handleTabClick = (tabId: string) => {
     playTabBeep();
@@ -324,9 +312,6 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
 
   const clearConsole = () => {
     setConsoleEntries([]);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('logEntries');
-    }
   };
 
   const exportConsole = () => {
@@ -358,12 +343,15 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
             <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs"><Upload className="mr-1 h-3 w-3" /> Export</Button>
           </div>
           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
-            {consoleEntries.slice(0, 20).map((entry, index) => (
+            {consoleEntries.slice(0, 50).map((entry, index) => (
               <div key={index} className={`flex items-start gap-2 text-slate-400`}>
                 <span className="text-slate-500">[{new Date(entry.timestamp).toLocaleTimeString()}]</span>
                 <span className={cn(
+                  'whitespace-pre-wrap break-all',
                   entry.level === 'log' && 'text-slate-300',
                   entry.level === 'api' && 'text-cyan-400',
+                  entry.level === 'error' && 'text-red-400',
+                  entry.level === 'warning' && 'text-yellow-400',
                 )}>[{entry.level}] {entry.message}</span>
               </div>
             ))}

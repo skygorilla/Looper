@@ -4,16 +4,16 @@
 
 @layer base {
   :root {
-    --background: 222 84% 4.9%; /* Very dark gray #1F2937 */
+    --background: 222 84% 4.9%;
     --foreground: 0 0% 98%;
 
-    --card: 224 13% 16%; /* Dark slate gray #374151 */
+    --card: 224 13% 16%;
     --card-foreground: 0 0% 98%;
 
     --popover: 222 84% 4.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 173 64% 52%; /* Teal #2DD4BF */
+    --primary: 162 72% 47%;
     --primary-foreground: 222 84% 4.9%;
 
     --secondary: 240 3.7% 15.9%;
@@ -22,7 +22,7 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 173 64% 52%; /* Teal #2DD4BF */
+    --accent: 173 64% 52%;
     --accent-foreground: 222 84% 4.9%;
 
     --destructive: 0 62.8% 30.6%;
@@ -30,22 +30,22 @@
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 173 64% 52%; /* Teal #2DD4BF */
+    --ring: 162 72% 47%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222 84% 4.9%; /* Very dark gray #1F2937 */
+    --background: 222 84% 4.9%;
     --foreground: 0 0% 98%;
     
-    --card: 224 13% 16%; /* Dark slate gray #374151 */
+    --card: 224 13% 16%;
     --card-foreground: 0 0% 98%;
     
     --popover: 222 84% 4.9%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 173 64% 52%; /* Teal #2DD4BF */
+    --primary: 162 72% 47%; /* Accent Green */
     --primary-foreground: 222 84% 4.9%;
     
     --secondary: 217 33% 17%;
@@ -54,7 +54,7 @@
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     
-    --accent: 173 64% 52%; /* Teal #2DD4BF */
+    --accent: 162 72% 47%;
     --accent-foreground: 222 84% 4.9%;
     
     --destructive: 0 63% 31%;
@@ -62,7 +62,7 @@
     
     --border: 240 4% 18%;
     --input: 240 4% 18%;
-    --ring: 173 64% 52%; /* Teal #2DD4BF */
+    --ring: 162 72% 47%;
   }
 }
 
@@ -87,6 +87,16 @@
     }
     50% {
       box-shadow: 0 0 20px hsl(var(--primary)/0.7), 0 0 30px hsl(var(--primary)/0.7);
+    }
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-subtle {
+    50% {
+      opacity: 0.75;
     }
   }
 }
