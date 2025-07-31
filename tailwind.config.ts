@@ -10,9 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Space Grotesk"', 'sans-serif'],
-        headline: ['"Space Grotesk"', 'sans-serif'],
-        code: ['"Roboto Mono"', 'monospace'],
+        body: ['var(--font-manrope)', 'sans-serif'],
+        headline: ['var(--font-manrope)', 'sans-serif'],
+        code: ['var(--font-fira-code)', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
