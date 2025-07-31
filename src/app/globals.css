@@ -13,56 +13,56 @@
     --popover: 222 84% 4.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 162 72% 47%;
-    --primary-foreground: 222 84% 4.9%;
+    --primary: 158 83% 40%; /* Accent Green: #10b981 */
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted-foreground: 223 11% 65%; /* Text Muted: #A6B0C3 */
 
-    --accent: 173 64% 52%;
-    --accent-foreground: 222 84% 4.9%;
+    --accent: 238 83% 69%; /* Accent Blue: #6366f1 */
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84% 60%; /* Accent Red: #ef4444 */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
+    --border: 228 12% 18%; /* Darker border */
     --input: 240 3.7% 15.9%;
-    --ring: 162 72% 47%;
+    --ring: 158 83% 40%; /* Accent Green for rings */
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222 84% 4.9%;
-    --foreground: 0 0% 98%;
+    --background: 220 13% 10%; /* BG Main: #1a1b1e */
+    --foreground: 0 0% 98%; /* Text Main */
     
-    --card: 224 13% 16%;
+    --card: 215 14% 21%; /* BG Card: #353A40 */
     --card-foreground: 0 0% 98%;
     
     --popover: 222 84% 4.9%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 162 72% 47%; /* Accent Green */
-    --primary-foreground: 222 84% 4.9%;
+    --primary: 158 83% 40%; /* Accent Green */
+    --primary-foreground: 0 0% 98%;
     
     --secondary: 217 33% 17%;
     --secondary-foreground: 0 0% 98%;
     
     --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 223 11% 65%; /* Text Muted */
     
-    --accent: 162 72% 47%;
-    --accent-foreground: 222 84% 4.9%;
+    --accent: 238 83% 69%; /* Accent Blue */
+    --accent-foreground: 0 0% 98%;
     
-    --destructive: 0 63% 31%;
+    --destructive: 0 84% 60%; /* Accent Red */
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 4% 18%;
-    --input: 240 4% 18%;
-    --ring: 162 72% 47%;
+    --border: 228 12% 18%;
+    --input: 228 12% 18%;
+    --ring: 158 83% 40%;
   }
 }
 
@@ -83,10 +83,10 @@
   @keyframes glow {
     0%,
     100% {
-      box-shadow: 0 0 5px hsl(var(--primary)/0.5), 0 0 10px hsl(var(--primary)/0.5);
+      filter: drop-shadow(0 0 6px hsl(var(--primary))) drop-shadow(0 0 10px hsl(var(--primary)));
     }
     50% {
-      box-shadow: 0 0 20px hsl(var(--primary)/0.7), 0 0 30px hsl(var(--primary)/0.7);
+      filter: drop-shadow(0 0 12px hsl(var(--primary))) drop-shadow(0 0 20px hsl(var(--primary)));
     }
   }
 
@@ -98,5 +98,27 @@
     50% {
       opacity: 0.75;
     }
+  }
+
+  .animate-spin-slow {
+    animation: spin 2s linear infinite;
+  }
+
+  .glitching { 
+    animation: glitch 0.4s ease-out; 
+  }
+  .fade-glitch { 
+    animation: fadeInGlitch 0.6s ease-out; 
+  }
+  .glitching-off { 
+    animation: glitchOff 1s ease-out forwards; 
+  }
+
+  @keyframes glitch { 0% { transform: translate(0, 0); opacity: 1; } 10% { transform: translate(-2px, 2px); opacity: 0.8; } 30% { transform: translate(2px, -2px); opacity: 1; } 50% { transform: translate(-1px, 1px); opacity: 0.9; } 70% { transform: translate(5px, 0); opacity: 1; } 90% { transform: translate(-3px, 3px); opacity: 0.9; } 100% { transform: translate(0, 0); opacity: 1; } }
+  @keyframes fadeInGlitch { 0% { opacity: 0; } 50% { opacity: 1; } 55% { opacity: 0.7; transform: skewX(-5deg); } 60% { opacity: 1; transform: skewX(5deg); } 65% { opacity: 0.8; transform: skewX(-2deg); } 100% { opacity: 1; transform: skewX(0); } }
+  @keyframes glitchOff { 0% { opacity: 1; filter: drop-shadow(0 0 6px hsl(var(--primary))) brightness(1); } 20% { opacity: 0.5; filter: drop-shadow(0 0 2px hsl(var(--primary))) brightness(0.8); } 40% { opacity: 1; } 60% { opacity: 0.3; filter: drop-shadow(0 0 4px hsl(var(--primary))) brightness(1); } 80% { opacity: 0.7; } 100% { opacity: 0; filter: drop-shadow(0 0 0px hsl(var(--primary))) brightness(0.9) grayscale(0.1); } }
+  @keyframes rotateThink { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .animate-rotate-think {
+    animation: rotateThink 2s linear infinite;
   }
 }

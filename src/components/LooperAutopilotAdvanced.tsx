@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -15,23 +14,17 @@ import {
   Activity, 
   Info,
   Play,
-  Pause,
   Square,
   Repeat,
   Clock,
   Globe,
   Trash2,
   Upload,
-  LoaderCircle
+  Pause,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
-
-interface LooperAutopilotAdvancedProps {
-  className?: string;
-  starterPrompt: string;
-  setStarterPrompt: (value: string) => void;
-}
 
 interface TabProps {
   id: string;
@@ -45,16 +38,19 @@ interface TabProps {
   className?: string;
 }
 
-const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children, onClick, onMouseEnter, isActive, className }) => {
+const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, children, onClick, onMouseEnter, isActive, className, description }) => {
   return (
     <div
       className={cn(
         "relative cursor-pointer transition-all duration-400 ease-in-out",
-        isActive ? "z-20 rounded-2xl bg-[hsl(var(--card))] shadow-lg overflow-hidden" : "z-10 flex items-center justify-center rounded-full bg-slate-800 w-14 h-14 hover:scale-110",
+        "w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900",
+        "hover:scale-110",
+        isActive ? "z-20 rounded-2xl bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-lg overflow-hidden" : "z-10",
         className
       )}
       onClick={() => onClick(id)}
       onMouseEnter={onMouseEnter}
+      data-tooltip={title}
     >
       <div className="flex items-center justify-center w-14 h-14">
         <Icon size={24} className={cn("text-slate-400 transition-opacity", isActive && "opacity-0")} />
@@ -62,13 +58,12 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, description, children,
       {isActive && (
         <div className="absolute inset-0 opacity-100 transition-opacity duration-300 delay-200 p-6 flex flex-col items-center text-center">
           <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-          <div className="text-slate-400 text-sm w-full h-full">{children || description}</div>
+          <div className="text-slate-400 text-sm w-full h-full flex flex-col">{children || description}</div>
         </div>
       )}
     </div>
   );
 };
-
 
 const MainPanel = ({
   sessionCount,
@@ -84,11 +79,14 @@ const MainPanel = ({
   handleInjectPrompt
 }: any) => {
   return (
-    <div className="w-full max-w-sm h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans">
-      <div className="text-center mb-6">
+    <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative">
+        <Button variant="ghost" size="icon" className="absolute top-4 right-[-10px] w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 hover:scale-110" data-tooltip="Close">
+            <X size={18} className="text-slate-400"/>
+        </Button>
+      <div className="text-center mb-6 cursor-move">
         <div className="grid grid-cols-3 items-center h-6 mb-3">
             <div className="justify-self-end">
-                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-spin"/>}
+                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-rotate-think"/>}
             </div>
             <div className={cn("text-white font-semibold transition-all justify-self-center", isRunning && "animate-glow")}>
                  <Image id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_on.svg?updatedAt=1753374507503" : "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_off.svg?updatedAt=1753374521185"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
@@ -117,20 +115,20 @@ const MainPanel = ({
       <div className="mb-5">
         <div className="flex gap-2.5 mb-3">
           <Button onClick={handleStart} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
-            {isRunning ? <Square size={20} className="text-red-500" /> : <Play size={20} className="text-green-500" />}
+            {isRunning ? <Square size={20} className="text-destructive" /> : <Play size={20} className="text-primary" />}
           </Button>
           <Button onClick={handlePause} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
             <Pause size={20} className="text-yellow-500" />
           </Button>
           <Button onClick={handleReset} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
-            <Repeat size={20} className="text-blue-500" />
+            <Repeat size={20} className="text-accent" />
           </Button>
         </div>
       </div>
       
       <textarea 
         id="starterPrompt"
-        className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16_18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16,18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-primary"
         value={starterPrompt}
         onChange={(e) => setStarterPrompt(e.target.value)}
         placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
@@ -139,7 +137,7 @@ const MainPanel = ({
 
       <div className="flex gap-2.5">
         <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
-          <Zap size={20} className="text-primary" />
+          <Zap size={20} className="text-accent" />
         </Button>
       </div>
 
@@ -150,7 +148,7 @@ const MainPanel = ({
   )
 }
 
-export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = ({ className, starterPrompt, setStarterPrompt }) => {
+export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ className }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -158,12 +156,12 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   const [totalCount, setTotalCount] = useState(0);
   const [consoleEntries, setConsoleEntries] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
+  const [starterPrompt, setStarterPrompt] = useState('');
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
 
-  // Deep pleasant beep for tab open/close
   const playTabBeep = () => {
     try {
       if (typeof window !== 'undefined' && window.AudioContext) {
@@ -171,7 +169,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = 'sine';
-        o.frequency.value = 164; // E3
+        o.frequency.value = 164;
         g.gain.setValueAtTime(0.13, ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
         o.connect(g).connect(ctx.destination);
@@ -184,7 +182,6 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     }
   };
 
-  // Tiny, short beep for tab hover
   const playTabHoverBeep = () => {
      try {
       if (typeof window !== 'undefined' && window.AudioContext) {
@@ -192,7 +189,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = 'triangle';
-        o.frequency.value = 1568; // G6
+        o.frequency.value = 1568;
         g.gain.setValueAtTime(0.07, ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
         o.connect(g).connect(ctx.destination);
@@ -205,19 +202,15 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
     }
   };
 
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
       setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
       const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
       setConsoleEntries(savedEntries);
+      setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
     }
-
-    setIssues([
-      { type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }
-    ]);
-  }, [setStarterPrompt]);
+  }, []);
 
   useEffect(() => {
      if (typeof window !== 'undefined') {
@@ -240,28 +233,19 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   const handleStart = () => {
     const willBeRunning = !isRunningRef.current;
     setIsRunning(willBeRunning);
-    
     if (willBeRunning) {
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
       setStatusText('Processing...');
       setIsThinking(true);
-      
-      const newEntry = {
-        timestamp: Date.now(),
-        level: 'log',
-        message: `Autopilot starting with prompt: ${starterPrompt.substring(0, 50)}...`
-      };
+      const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${starterPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
-
-      // Simulate work
       setTimeout(() => {
         if(isRunningRef.current) {
            setStatusText('Task Complete');
            setIsThinking(false);
         }
       }, 3000);
-
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
@@ -292,39 +276,22 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
   };
 
   const handleInjectPrompt = () => {
-    const newEntry = {
-      timestamp: Date.now(),
-      level: 'api',
-      message: `Injecting prompt: ${starterPrompt.substring(0, 50)}...`
-    };
+    const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${starterPrompt.substring(0, 50)}...` };
     setConsoleEntries(prev => [newEntry, ...prev]);
-    const target = document.getElementById('starterPrompt') as HTMLTextAreaElement;
-    if (target) {
-        target.value = starterPrompt;
-    }
   };
 
-  const captureIssues = () => {
-    setIssues([
-      { type: 'info', message: 'No issues detected. Page appears to be functioning correctly.' }
-    ]);
-  };
-
-  const clearConsole = () => {
-    setConsoleEntries([]);
-  };
-
+  const captureIssues = () => setIssues([{ type: 'info', message: 'No issues detected. Page appears to be functioning correctly.' }]);
+  const clearConsole = () => setConsoleEntries([]);
   const exportConsole = () => {
     if (typeof window === 'undefined') return;
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `console-log-${timestamp}.json`;
     const dataStr = JSON.stringify(consoleEntries, null, 2);
     const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(dataBlob);
-    link.download = filename;
+    link.href = url;
+    link.download = `console-log-${new Date().toISOString()}.json`;
     link.click();
-    URL.revokeObjectURL(link.href);
+    URL.revokeObjectURL(url);
   };
 
   const TABS = {
@@ -339,20 +306,14 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
       { id: 'console', icon: Terminal, title: "Console", description: "View system console output.", children: (
         <div className="w-full h-full flex flex-col text-left">
           <div className="flex gap-2 mb-2">
-            <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
-            <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs"><Upload className="mr-1 h-3 w-3" /> Export</Button>
+            <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
+            <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Upload className="mr-1 h-3 w-3" /> Export</Button>
           </div>
           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
             {consoleEntries.slice(0, 50).map((entry, index) => (
-              <div key={index} className={`flex items-start gap-2 text-slate-400`}>
+              <div key={index} className="flex items-start gap-2 text-slate-400">
                 <span className="text-slate-500">[{new Date(entry.timestamp).toLocaleTimeString()}]</span>
-                <span className={cn(
-                  'whitespace-pre-wrap break-all',
-                  entry.level === 'log' && 'text-slate-300',
-                  entry.level === 'api' && 'text-cyan-400',
-                  entry.level === 'error' && 'text-red-400',
-                  entry.level === 'warning' && 'text-yellow-400',
-                )}>[{entry.level}] {entry.message}</span>
+                <span className={cn('whitespace-pre-wrap break-all', entry.level === 'log' && 'text-slate-300', entry.level === 'api' && 'text-cyan-400', entry.level === 'error' && 'text-red-400', entry.level === 'warning' && 'text-yellow-400')}>[{entry.level}] {entry.message}</span>
               </div>
             ))}
           </div>
@@ -361,15 +322,11 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
       { id: 'issues', icon: AlertTriangle, title: "Issues", description: "DevTools-style issue detection.", children: (
          <div className="w-full h-full flex flex-col text-left">
            <div className="flex gap-2 mb-2">
-            <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs">Capture Issues</Button>
+            <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
            </div>
            <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
              {issues.map((issue, index) => (
-                <div key={index} className={cn("flex items-start gap-2 p-1 rounded", 
-                  issue.type === 'info' && 'bg-blue-900/30 text-blue-300',
-                  issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300',
-                  issue.type === 'error' && 'bg-red-900/30 text-red-300'
-                )}>
+                <div key={index} className={cn("flex items-start gap-2 p-1 rounded", issue.type === 'info' && 'bg-blue-900/30 text-blue-300', issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300', issue.type === 'error' && 'bg-red-900/30 text-red-300')}>
                   <div className="font-bold uppercase">{issue.type}</div>
                   <div>{issue.message}</div>
                 </div>
@@ -391,12 +348,7 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
 
   const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'onMouseEnter' | 'isActive'>[]) => 
     tabData.map(tab => 
-      <Tab 
-        key={tab.id} 
-        {...tab} 
-        onClick={handleTabClick} 
-        onMouseEnter={playTabHoverBeep}
-        isActive={activeTab === tab.id}
+      <Tab key={tab.id} {...tab} onClick={handleTabClick} onMouseEnter={playTabHoverBeep} isActive={activeTab === tab.id}
         className={cn(
           (tab.id === 'console' || tab.id === 'issues') && activeTab === tab.id && "w-80 h-96",
           (tab.id !== 'console' && tab.id !== 'issues') && activeTab === tab.id && "w-96 h-52",
@@ -404,22 +356,20 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
       />
     );
 
-
   return (
-    <div className={cn("relative flex justify-center items-center p-5 transform scale-90", className)}>
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] grid-rows-1 gap-5 items-center">
-        {/* Left Column */}
-        <div className="hidden md:flex flex-col gap-5 justify-self-end">
+    <div className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}>
+        {/* Top */}
+        <div className="col-start-2 row-start-1 flex flex-row gap-5">
+          {renderTabs(TABS.top)}
+        </div>
+        
+        {/* Left */}
+        <div className="col-start-1 row-start-2 flex flex-col gap-5 justify-self-end">
           {renderTabs(TABS.left)}
         </div>
         
-        {/* Center Column */}
-        <div className="flex flex-col items-center gap-5">
-           {/* Top Row */}
-          <div className="hidden md:flex flex-row gap-5">
-            {renderTabs(TABS.top)}
-          </div>
-
+        {/* Center */}
+        <div className="col-start-2 row-start-2">
           <MainPanel 
             sessionCount={sessionCount}
             totalCount={totalCount}
@@ -433,18 +383,17 @@ export const LooperAutopilotAdvanced: React.FC<LooperAutopilotAdvancedProps> = (
             setStarterPrompt={setStarterPrompt}
             handleInjectPrompt={handleInjectPrompt}
           />
-
-          {/* Bottom Row */}
-          <div className="hidden md:flex flex-row gap-5">
-            {renderTabs(TABS.bottom)}
-          </div>
         </div>
 
-        {/* Right Column */}
-        <div className="hidden md:flex flex-col gap-5 justify-self-start">
+        {/* Right */}
+        <div className="col-start-3 row-start-2 flex flex-col gap-5 justify-self-start">
           {renderTabs(TABS.right)}
         </div>
-      </div>
+
+        {/* Bottom */}
+        <div className="col-start-2 row-start-3 flex flex-row gap-5">
+            {renderTabs(TABS.bottom)}
+        </div>
     </div>
   );
 };
