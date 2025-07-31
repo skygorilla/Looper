@@ -214,7 +214,7 @@ export function NexusPanel() {
               </div>
             </div>
             <div className="flex h-full items-center gap-4 pl-4">
-              <FaderControl label="OUTPUT" />
+              
               <div className="flex h-20 w-8 flex-col justify-between rounded-md border-2 border-slate-300 bg-slate-700 p-1">
                 <div className="h-1/3 w-full animate-pulse rounded-sm bg-blue-400" />
                 <div className="h-1/4 w-full animate-pulse rounded-sm bg-blue-300" />
