@@ -13,7 +13,7 @@ export default {
         sans: ['var(--font-inter)', 'sans-serif'],
         body: ['var(--font-inter)', 'sans-serif'],
         headline: ['var(--font-inter)', 'sans-serif'],
-        code: ['var(--font-inter)', 'monospace'],
+        code: ['var(--font-fira-code)', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
