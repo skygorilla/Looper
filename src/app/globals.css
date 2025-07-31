@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    --background: 222 84% 4.9%; /* Very dark gray #1F2937 */
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
+    --card: 224 13% 16%; /* Dark slate gray #374151 */
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 3.9%;
+    --popover: 222 84% 4.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 260 100% 70%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 173 64% 52%; /* Teal #2DD4BF */
+    --primary-foreground: 222 84% 4.9%;
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -22,45 +22,47 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 260 100% 70%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 173 64% 52%; /* Teal #2DD4BF */
+    --accent-foreground: 222 84% 4.9%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 260 100% 70%;
+    --ring: 173 64% 52%; /* Teal #2DD4BF */
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 240 6% 10%;
-    --foreground: 210 40% 98%;
-    --card: 240 4% 14%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 210 40% 98%;
+    --background: 222 84% 4.9%; /* Very dark gray #1F2937 */
+    --foreground: 0 0% 98%;
     
-    --primary: 260 100% 70%;
-    --primary-foreground: 210 40% 98%;
+    --card: 224 13% 16%; /* Dark slate gray #374151 */
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 222 84% 4.9%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 173 64% 52%; /* Teal #2DD4BF */
+    --primary-foreground: 222 84% 4.9%;
     
     --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 0 0% 98%;
     
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     
-    --accent: 260 100% 70%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 173 64% 52%; /* Teal #2DD4BF */
+    --accent-foreground: 222 84% 4.9%;
     
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
     
     --border: 240 4% 18%;
     --input: 240 4% 18%;
-    --ring: 260 100% 70%;
+    --ring: 173 64% 52%; /* Teal #2DD4BF */
   }
 }
 

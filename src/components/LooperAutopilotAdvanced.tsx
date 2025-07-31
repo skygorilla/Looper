@@ -91,7 +91,7 @@ const MainPanel = ({
                  {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-spin"/>}
             </div>
             <div className={cn("text-white font-semibold transition-all justify-self-center", isRunning && "animate-glow")}>
-                 <Image id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/loopr_on.svg?updatedAt=1753268249873" : "https://ik.imagekit.io/oe3ifd1ja/Vector/loopr_off.svg?updatedAt=1753268231332"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
+                 <Image id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_on.svg?updatedAt=1753374507503" : "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_off.svg?updatedAt=1753374521185"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
             </div>
             <div className="justify-self-start">
               {!isThinking && <div className="text-2xl animate-pulse-subtle">⚡</div>}
