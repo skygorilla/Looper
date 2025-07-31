@@ -1,11 +1,17 @@
 'use client';
 
-import { UIAutomationPanel } from '@/components/UIAutomationPanel';
+import { LooperAutopilotAdvanced } from '@/components/LooperAutopilotAdvanced';
+import { useState } from 'react';
 
 export default function Home() {
+  const [starterPrompt, setStarterPrompt] = useState('');
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <UIAutomationPanel />
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-transparent">
+      <LooperAutopilotAdvanced 
+        starterPrompt={starterPrompt}
+        setStarterPrompt={setStarterPrompt}
+      />
     </main>
   );
 }
