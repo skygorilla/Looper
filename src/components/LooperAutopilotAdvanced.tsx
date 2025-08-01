@@ -38,6 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 interface TabProps {
   id: string;
   icon: React.ElementType;
+  iconClassName?: string;
   title: string;
   description: string;
   children?: React.ReactNode;
@@ -47,13 +48,15 @@ interface TabProps {
   className?: string;
 }
 
-const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, children, onClick, onMouseEnter, isActive, className, description }) => {
+const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, children, onClick, onMouseEnter, isActive, className, description }) => {
   const tabContent = (
     <div
       className={cn(
         "relative cursor-pointer transition-all duration-400 ease-in-out",
-        "w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900",
-        "hover:scale-110",
+        "w-14 h-14 rounded-full flex items-center justify-center",
+        "bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D]",
+        "hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] hover:scale-105",
+        "active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)]",
         isActive ? "z-20 rounded-2xl bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-lg overflow-hidden" : "z-10",
         className
       )}
@@ -61,7 +64,7 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, children, onClick, onM
       onMouseEnter={onMouseEnter}
     >
       <div className="flex items-center justify-center w-14 h-14">
-        <Icon size={24} className={cn("text-slate-400 transition-opacity", isActive && "opacity-0")} />
+        <Icon size={24} className={cn("transition-opacity", isActive && "opacity-0", iconClassName)} />
       </div>
       {isActive && (
         <div className="absolute inset-0 opacity-100 transition-opacity duration-300 delay-200 p-6 flex flex-col items-center text-center">
@@ -493,9 +496,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const TABS = {
     top: [
-      { id: 'audit', icon: ShieldCheck, title: "Audit", description: "Review and analyze the app for issues or improvements." },
-      { id: 'design-system', icon: Palette, title: "Design System", description: "Access and apply design/dev standards." },
-      { id: 'monitor', icon: ShieldCheck, title: "Monitor", description: "View real-time project health and prompt crash risk.", children: (
+      { id: 'monitor', icon: ShieldCheck, title: "Monitor", description: "View real-time project health and prompt crash risk.", iconClassName: "text-primary", children: (
         <div className="w-full h-full flex flex-col text-left">
           <h4 className="text-lg font-semibold text-white mb-2">Prompt Safety Analysis</h4>
            {isAuditing && (
@@ -521,11 +522,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             )}
         </div>
       ) },
-      { id: 'ai-maintenance', icon: Bot, title: "AI Maintenance", description: "Insert prompt for AI-driven app maintenance." },
-      { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts." },
+      { id: 'ai-maintenance', icon: Bot, title: "AI Maintenance", description: "Insert prompt for AI-driven app maintenance.", iconClassName: "text-accent" },
+      { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts.", iconClassName: "text-yellow-500" },
     ],
     left: [
-      { id: 'console', icon: Terminal, title: "Console", description: "View system console output.", children: (
+      { id: 'console', icon: Terminal, title: "Console", description: "View system console output.", iconClassName: "text-slate-400", children: (
         <div className="w-full h-full flex flex-col text-left">
           <div className="flex gap-2 mb-2">
             <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
@@ -542,7 +543,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </div>
         </div>
       ) },
-      { id: 'issues', icon: AlertTriangle, title: "Issues", description: "DevTools-style issue detection.", children: (
+      { id: 'issues', icon: AlertTriangle, title: "Issues", description: "DevTools-style issue detection.", iconClassName: "text-destructive", children: (
          <div className="w-full h-full flex flex-col text-left">
            <div className="flex gap-2 mb-2">
             <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
@@ -558,10 +559,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
            </div>
          </div>
       )},
-      { id: 'system', icon: Settings, title: "System Status", description: "View system information." },
+      { id: 'system', icon: Settings, title: "System Status", description: "View system information.", iconClassName: "text-slate-400" },
     ],
     right: [
-      { id: 'history', icon: FileClock, title: "History", description: "View prompt and action history.", children: (
+      { id: 'history', icon: FileClock, title: "History", description: "View prompt and action history.", iconClassName: "text-accent", children: (
           <div className="w-full h-full flex flex-col text-left">
             <h4 className="text-lg font-semibold text-white mb-2">Prompt History</h4>
             <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
@@ -575,7 +576,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </div>
           </div>
       )},
-      { id: 'sitemap', icon: FileText, title: "Site Map", description: "Navigate site structure.", children: (
+      { id: 'sitemap', icon: FileText, title: "Site Map", description: "Navigate site structure.", iconClassName: "text-primary", children: (
         <div className="w-full h-full flex flex-col text-left">
           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto flex items-center justify-center">
             {isScanningSitemap && (
@@ -602,7 +603,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </div>
         </div>
       ) },
-      { id: 'time', icon: Clock, title: "Time Management", description: "Track time spent on the project.", children: (
+      { id: 'time', icon: Clock, title: "Time Management", description: "Track time spent on the project.", iconClassName: "text-yellow-500", children: (
         <div className="w-full h-full flex flex-col items-center justify-center text-center">
           <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
           {isLoading ? (
@@ -616,8 +617,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       ) },
     ],
     bottom: [
-      { id: 'activity', icon: Activity, title: "Activity Log", description: "View system activity." },
-      { id: 'about', icon: Info, title: "About", description: "Information about the system." },
+      { id: 'activity', icon: Activity, title: "Activity Log", description: "View system activity.", iconClassName: "text-slate-400" },
+      { id: 'about', icon: Info, title: "About", description: "Information about the system.", iconClassName: "text-slate-400" },
     ]
   };
 
@@ -675,5 +676,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     </TooltipProvider>
   );
 };
+
+    
 
     
