@@ -23,13 +23,16 @@ import {
   Upload,
   Pause,
   X,
-  History
+  History,
+  Search,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 
 
 interface TabProps {
@@ -176,6 +179,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
   
+  const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
+  const [isScanningSitemap, setIsScanningSitemap] = useState(false);
+
   const playTabBeep = () => {
     try {
       if (typeof window !== 'undefined' && window.AudioContext) {
@@ -375,6 +381,22 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     URL.revokeObjectURL(url);
   };
 
+  const handleGenerateSitemap = async () => {
+    if (typeof window === 'undefined') return;
+    setIsScanningSitemap(true);
+    setSitemap(null);
+    try {
+      const bodyHtml = document.body.outerHTML;
+      const result = await generateSitemap({ html: bodyHtml });
+      setSitemap(result.sitemap);
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to generate sitemap.' }, ...prev]);
+    } finally {
+      setIsScanningSitemap(false);
+    }
+  };
+
   const formatTime = (totalSeconds: number) => {
     const days = Math.floor(totalSeconds / (3600 * 24));
     totalSeconds %= (3600 * 24);
@@ -429,7 +451,25 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     ],
     right: [
       { id: 'history', icon: History, title: "History", description: "View prompt and action history." },
-      { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure." },
+      { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure.", children: (
+        <div className="w-full h-full flex flex-col text-left">
+          <Button onClick={handleGenerateSitemap} disabled={isScanningSitemap} className="mb-2">
+            <Search className="mr-2 h-4 w-4" />
+            {isScanningSitemap ? 'Scanning...' : 'Scan Project'}
+          </Button>
+          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+            {isScanningSitemap && <div>Analyzing page...</div>}
+            {sitemap && sitemap.length === 0 && <div>No pages found.</div>}
+            {sitemap && sitemap.map((page, index) => (
+              <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
+                <div className="font-bold text-white flex items-center"><FileText size={14} className="mr-2" />{page.title}</div>
+                <div className="text-cyan-400 text-xs my-1">{page.path}</div>
+                <div className="text-slate-400">{page.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) },
       { id: 'time', icon: Clock, title: "Time Management", description: "Track time spent on the project.", children: (
         <div className="w-full h-full flex flex-col items-center justify-center text-center">
           <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
@@ -453,8 +493,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     tabData.map(tab => 
       <Tab key={tab.id} {...tab} onClick={handleTabClick} onMouseEnter={playTabHoverBeep} isActive={activeTab === tab.id}
         className={cn(
-          (tab.id === 'console' || tab.id === 'issues') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'console' && tab.id !== 'issues') && activeTab === tab.id && "w-96 h-52",
+          (tab.id === 'console' || tab.id === 'issues' || tab.id === 'sitemap') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'console' && tab.id !== 'issues' && tab.id !== 'sitemap') && activeTab === tab.id && "w-96 h-52",
         )}
       />
     );
