@@ -104,7 +104,7 @@ const MainPanel = ({
                  <Image id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_on.svg?updatedAt=1753374507503" : "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_off.svg?updatedAt=1753374521185"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
             </div>
             <div className="justify-self-start">
-              {!isThinking && <div className="text-2xl animate-pulse-subtle">⚡</div>}
+              {!isThinking && <div className="w-6 h-6"></div>}
             </div>
         </div>
         <div className="text-xs uppercase tracking-wider text-slate-400">{statusText}</div>
@@ -609,5 +609,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     </div>
   );
 };
+
+    
 
     
