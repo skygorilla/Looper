@@ -149,7 +149,7 @@ const MainPanel = ({
   )
 }
 
-export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ className }) => {
+export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?: string}> = ({ className, projectName = "Default Project" }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -163,8 +163,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ classN
   const [timeSpent, setTimeSpent] = useState(0);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
-  const projectName = "Looper";
-
+  
   const playTabBeep = () => {
     try {
       if (typeof window !== 'undefined' && window.AudioContext) {
