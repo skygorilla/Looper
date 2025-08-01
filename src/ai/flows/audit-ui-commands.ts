@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Audits UI commands of a webpage for accessibility, usability, and best practices.
+ * @fileOverview Audits UI commands from a prompt to assess potential risk.
  *
  * - auditUICommands - A function that handles the UI command auditing process.
  * - AuditUICommandsInput - The input type for the auditUICommands function.
@@ -12,14 +12,15 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AuditUICommandsInputSchema = z.object({
-  html: z
+  prompt: z
     .string()
-    .describe('The HTML content of the webpage to audit.'),
+    .describe('The prompt containing UI commands to be audited.'),
 });
 export type AuditUICommandsInput = z.infer<typeof AuditUICommandsInputSchema>;
 
 const AuditUICommandsOutputSchema = z.object({
-  auditResults: z.string().describe('The audit results for accessibility, usability, and best practices.'),
+  riskLevel: z.enum(['Low', 'Medium', 'High', 'Critical']).describe('The assessed risk level of the commands.'),
+  assessment: z.string().describe('A detailed assessment explaining the risks, potential for crashes, or heavy operations.'),
 });
 export type AuditUICommandsOutput = z.infer<typeof AuditUICommandsOutputSchema>;
 
@@ -31,13 +32,18 @@ const prompt = ai.definePrompt({
   name: 'auditUICommandsPrompt',
   input: {schema: AuditUICommandsInputSchema},
   output: {schema: AuditUICommandsOutputSchema},
-  prompt: `You are an expert UI/UX auditor.
+  prompt: `You are an expert UI automation and web development safety auditor. Analyze the following prompt, which describes a series of actions to be taken on a webpage.
 
-You will analyze the provided HTML content of a webpage and audit its UI commands (buttons, links, forms, etc.) for accessibility, usability, and best practices.
-Provide detailed findings and recommendations.
+Your task is to assess the potential risk of these actions. Consider the following:
+- Destructive actions (e.g., deleting elements, clearing data).
+- High-volume operations (e.g., creating hundreds of elements, making many API calls in a loop).
+- Complex DOM manipulations that could lead to performance issues or crashes.
+- Vague or ambiguous commands that could be misinterpreted.
 
-HTML Content:
-{{{html}}}`,
+Based on your analysis, determine a risk level and provide a concise assessment explaining your reasoning.
+
+Prompt to audit:
+"{{{prompt}}}"`,
 });
 
 const auditUICommandsFlow = ai.defineFlow(
@@ -47,6 +53,12 @@ const auditUICommandsFlow = ai.defineFlow(
     outputSchema: AuditUICommandsOutputSchema,
   },
   async input => {
+    if (!input.prompt?.trim()) {
+        return {
+            riskLevel: 'Low',
+            assessment: 'Prompt is empty. No action will be taken.'
+        };
+    }
     const {output} = await prompt(input);
     return output!;
   }

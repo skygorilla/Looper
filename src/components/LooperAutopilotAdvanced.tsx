@@ -34,6 +34,7 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
+import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 
 
 interface TabProps {
@@ -182,6 +183,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   
   const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
   const [isScanningSitemap, setIsScanningSitemap] = useState(false);
+
+  const [auditResult, setAuditResult] = useState<AuditUICommandsOutput | null>(null);
+  const [isAuditing, setIsAuditing] = useState(false);
 
   const playTabBeep = () => {
     try {
@@ -397,12 +401,31 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       setIsScanningSitemap(false);
     }
   }, [isScanningSitemap]);
+  
+  const handleAuditPrompt = useCallback(async () => {
+    if (isAuditing) return;
+    setIsAuditing(true);
+    setAuditResult(null);
+    try {
+      const result = await auditUICommands({ prompt: starterPrompt });
+      setAuditResult(result);
+    } catch (error) {
+      console.error("Error auditing prompt:", error);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to audit prompt.' }, ...prev]);
+      setAuditResult({ riskLevel: 'High', assessment: 'Could not analyze prompt due to an error.' });
+    } finally {
+      setIsAuditing(false);
+    }
+  }, [isAuditing, starterPrompt]);
 
   useEffect(() => {
     if (activeTab === 'sitemap' && !sitemap) {
         handleGenerateSitemap();
     }
-  }, [activeTab, sitemap, handleGenerateSitemap]);
+    if (activeTab === 'monitor') {
+        handleAuditPrompt();
+    }
+  }, [activeTab, sitemap, handleGenerateSitemap, handleAuditPrompt]);
 
   const formatTime = (totalSeconds: number) => {
     const days = Math.floor(totalSeconds / (3600 * 24));
@@ -414,11 +437,44 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
   };
 
+  const getRiskColor = (riskLevel: AuditUICommandsOutput['riskLevel']) => {
+    switch (riskLevel) {
+      case 'Low': return 'text-green-400';
+      case 'Medium': return 'text-yellow-400';
+      case 'High': return 'text-orange-400';
+      case 'Critical': return 'text-red-500';
+      default: return 'text-slate-400';
+    }
+  };
+
+
   const TABS = {
     top: [
       { id: 'audit', icon: Shield, title: "Audit", description: "Audit your app for issues." },
       { id: 'design-system', icon: CheckCircle, title: "Design System", description: "Insert design/dev directives." },
-      { id: 'monitor', icon: Monitor, title: "Monitor", description: "Show project health dashboard." },
+      { id: 'monitor', icon: Monitor, title: "Monitor", description: "Show project health dashboard.", children: (
+        <div className="w-full h-full flex flex-col text-left">
+          <h4 className="text-lg font-semibold text-white mb-2">Prompt Safety Analysis</h4>
+           {isAuditing && (
+              <div className="flex flex-col items-center justify-center gap-2 text-slate-400 h-full">
+                <Loader className="animate-spin h-8 w-8" />
+                <span>Auditing Prompt...</span>
+              </div>
+            )}
+            {!isAuditing && auditResult && (
+                 <div className="flex flex-col gap-3 text-sm">
+                    <div>
+                        <span className="font-semibold text-slate-400">Risk Level: </span>
+                        <span className={cn("font-bold", getRiskColor(auditResult.riskLevel))}>{auditResult.riskLevel}</span>
+                    </div>
+                    <div>
+                         <span className="font-semibold text-slate-400">Assessment:</span>
+                         <p className="text-slate-300 bg-slate-900/50 rounded-md p-2 mt-1">{auditResult.assessment}</p>
+                    </div>
+                 </div>
+            )}
+        </div>
+      ) },
       { id: 'ai-maintenance', icon: Plus, title: "AI Maintenance", description: "Insert AI maintenance prompt." },
       { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts." },
     ],
@@ -553,5 +609,3 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     </div>
   );
 };
-
-    
