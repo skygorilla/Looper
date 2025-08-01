@@ -337,9 +337,33 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
      }
   }, [starterPrompt, consoleEntries]);
 
+  const handleAuditPrompt = useCallback(async () => {
+    if (isAuditing) return;
+    setIsAuditing(true);
+    setAuditResult(null);
+    try {
+      const result = await auditUICommands({ prompt: starterPrompt });
+      setAuditResult(result);
+    } catch (error) {
+      console.error("Error auditing prompt:", error);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to audit prompt.' }, ...prev]);
+      setAuditResult({ riskLevel: 'High', assessment: 'Could not analyze prompt due to an error.' });
+    } finally {
+      setIsAuditing(false);
+    }
+  }, [isAuditing, starterPrompt]);
+
   const handleTabClick = (tabId: string) => {
     playTabBeep();
-    setActiveTab(activeTab === tabId ? null : tabId);
+    const newActiveTab = activeTab === tabId ? null : tabId;
+    setActiveTab(newActiveTab);
+
+    if (newActiveTab === 'sitemap') {
+      handleGenerateSitemap();
+    }
+    if (newActiveTab === 'monitor') {
+      handleAuditPrompt();
+    }
   };
 
   const handlePause = () => {
@@ -402,30 +426,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   }, [isScanningSitemap]);
   
-  const handleAuditPrompt = useCallback(async () => {
-    if (isAuditing) return;
-    setIsAuditing(true);
-    setAuditResult(null);
-    try {
-      const result = await auditUICommands({ prompt: starterPrompt });
-      setAuditResult(result);
-    } catch (error) {
-      console.error("Error auditing prompt:", error);
-      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to audit prompt.' }, ...prev]);
-      setAuditResult({ riskLevel: 'High', assessment: 'Could not analyze prompt due to an error.' });
-    } finally {
-      setIsAuditing(false);
-    }
-  }, [isAuditing, starterPrompt]);
-
-  useEffect(() => {
-    if (activeTab === 'sitemap' && !sitemap) {
-        handleGenerateSitemap();
-    }
-    if (activeTab === 'monitor') {
-        handleAuditPrompt();
-    }
-  }, [activeTab, sitemap, handleGenerateSitemap, handleAuditPrompt]);
 
   const formatTime = (totalSeconds: number) => {
     const days = Math.floor(totalSeconds / (3600 * 24));
@@ -609,3 +609,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     </div>
   );
 };
+
+    
