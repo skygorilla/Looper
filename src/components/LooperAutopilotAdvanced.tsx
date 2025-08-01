@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 
 interface TabProps {
   id: string;
@@ -161,6 +165,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
   
@@ -205,28 +210,49 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const timeKey = `looper-time-spent-${projectName}`;
-      const savedTime = parseInt(localStorage.getItem(timeKey) || '0', 10);
-      setTimeSpent(savedTime);
-      
-      const interval = setInterval(() => {
-        setTimeSpent(prevTime => {
-          const newTime = prevTime + 1;
-          localStorage.setItem(timeKey, newTime.toString());
-          return newTime;
-        });
-      }, 1000);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
-      setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
-      setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
-      const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
-      setConsoleEntries(savedEntries);
-      setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
+  useEffect(() => {
+    if (!projectName) return;
 
-      return () => clearInterval(interval);
-    }
+    const getTimeSpent = async () => {
+      const docId = `time_log_${projectName.replace(/\s+/g, '_')}`;
+      const docRef = doc(db, "projectTime", docId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setTimeSpent(docSnap.data().secondsSpent || 0);
+      } else {
+        setTimeSpent(0);
+      }
+    };
+
+    getTimeSpent();
+    
+    const interval = setInterval(async () => {
+      const newTime = (prevTime: number) => {
+        const updatedTime = prevTime + 1;
+        const docId = `time_log_${projectName.replace(/\s+/g, '_')}`;
+        const docRef = doc(db, "projectTime", docId);
+        setDoc(docRef, { secondsSpent: updatedTime, lastUpdated: serverTimestamp() }, { merge: true });
+        return updatedTime;
+      }
+      setTimeSpent(newTime);
+    }, 1000);
+
+    setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
+    setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
+    const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
+    setConsoleEntries(savedEntries);
+    setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
+
+    return () => clearInterval(interval);
   }, [projectName]);
+
 
   useEffect(() => {
      if (typeof window !== 'undefined') {
