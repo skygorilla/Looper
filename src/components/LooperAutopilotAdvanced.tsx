@@ -107,7 +107,7 @@ const MainPanel = ({
       
       <div className="bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] rounded-2xl p-5 mb-6 shadow-[inset_14px_14px_40px_rgba(16,16,18,0.75),inset_-7px_-7px_30px_#262E32]">
         {isLoading ? (
-          <div className="text-center text-slate-400">Loading Stats...</div>
+          <div className="text-center text-slate-400">Connecting...</div>
         ) : (
           <div className="flex justify-around items-center">
             <div className="text-center">
@@ -219,13 +219,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (!currentUser) {
+        // We could handle the signed-out state here if needed
+        setIsLoading(true); 
+      }
     });
     return () => unsubscribe();
   }, []);
 
-  // Effect for loading data from Firestore
+  // Effect for loading data from Firestore, dependent on user and projectName
   useEffect(() => {
-    if (!projectName) return;
+    if (!user || !projectName) {
+      setIsLoading(true);
+      return;
+    }
+
     setIsLoading(true);
     const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
     const docRef = doc(db, "projectStats", docId);
@@ -244,6 +252,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       })
       .catch((error) => {
         console.error("Error fetching project stats:", error);
+        // Set to 0 on error to avoid undefined state
+        setTimeSpent(0);
+        setTotalCount(0);
       })
       .finally(() => {
         setIsLoading(false);
@@ -257,11 +268,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     }
     setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
   
-  }, [projectName]);
+  }, [user, projectName]);
   
   // Effect for tracking and saving timeSpent
   useEffect(() => {
-    if (isLoading || !projectName) {
+    if (isLoading || !projectName || isPaused || !isRunning) {
       return;
     }
   
@@ -270,6 +281,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
         const newTime = prevTime + 1;
         const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
         const docRef = doc(db, "projectStats", docId);
+        // We only save time, totalCount is saved on start
         setDoc(docRef, { timeSpent: newTime }, { merge: true }).catch(error => {
            console.error("Error updating time spent:", error);
         });
@@ -278,7 +290,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     }, 1000);
   
     return () => clearInterval(interval);
-  }, [projectName, isLoading]);
+  }, [projectName, isLoading, isPaused, isRunning]);
 
 
   useEffect(() => {
@@ -303,6 +315,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     if (isLoading) return;
     const willBeRunning = !isRunningRef.current;
     setIsRunning(willBeRunning);
+    if(isPaused) setIsPaused(false);
   
     if (willBeRunning) {
       setSessionCount(prev => prev + 1);
@@ -311,7 +324,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       setTotalCount(newTotalCount);
   
       // Save new total count to Firestore
-      if (projectName) {
+      if (projectName && user) {
         const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
         const docRef = doc(db, "projectStats", docId);
         setDoc(docRef, { totalCount: newTotalCount }, { merge: true });
@@ -335,14 +348,16 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   };
 
   const handlePause = () => {
-    const willBePaused = !isPaused;
-    setIsPaused(willBePaused);
-    if(willBePaused) {
-      setStatusText('Paused');
-      setIsThinking(false);
-    } else {
-      setStatusText('Processing...');
-      if(isRunning) setIsThinking(true);
+    if(isRunning) {
+        const willBePaused = !isPaused;
+        setIsPaused(willBePaused);
+        if(willBePaused) {
+          setStatusText('Paused');
+          setIsThinking(false);
+        } else {
+          setStatusText('Processing...');
+          if(isRunning) setIsThinking(true);
+        }
     }
   };
 
