@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
 interface TabProps {
@@ -216,6 +216,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     return () => unsubscribe();
   }, []);
 
+  // Effect for loading data from Firestore
   useEffect(() => {
     if (!projectName) return;
   
@@ -223,31 +224,49 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     const docRef = doc(db, "projectStats", docId);
   
     const getData = async () => {
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setTimeSpent(data.secondsSpent || 0);
-        setTotalCount(data.totalCount || 0);
-      } else {
-        setTimeSpent(0);
-        setTotalCount(0);
+      try {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setTimeSpent(data.secondsSpent || 0);
+          setTotalCount(data.totalCount || 0);
+        } else {
+          // If doc doesn't exist, initialize with 0
+          setTimeSpent(0);
+          setTotalCount(0);
+        }
+      } catch (error) {
+        console.error("Error fetching project stats:", error);
       }
     };
   
     getData();
   
-    const interval = setInterval(async () => {
-      setTimeSpent(prevTime => {
-        const updatedTime = prevTime + 1;
-        setDoc(docRef, { secondsSpent: updatedTime }, { merge: true });
-        return updatedTime;
-      });
-    }, 1000);
-  
+    // Load local stuff
     setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
     const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
     setConsoleEntries(savedEntries);
     setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
+  
+  }, [projectName]);
+  
+  // Effect for tracking and saving timeSpent
+  useEffect(() => {
+    if (!projectName) return;
+  
+    const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+    const docRef = doc(db, "projectStats", docId);
+  
+    const interval = setInterval(() => {
+      setTimeSpent(prevTime => {
+        const newTime = prevTime + 1;
+        // Save to Firestore, merge to not overwrite totalCount
+        setDoc(docRef, { secondsSpent: newTime }, { merge: true }).catch(error => {
+           console.error("Error updating time spent:", error);
+        });
+        return newTime;
+      });
+    }, 1000);
   
     return () => clearInterval(interval);
   }, [projectName]);
@@ -351,7 +370,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     const hours = Math.floor(totalSeconds / 3600);
     totalSeconds %= 3600;
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
+    const seconds = Math.floor(totalSeconds % 60);
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
   };
 
