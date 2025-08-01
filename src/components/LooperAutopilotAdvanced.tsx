@@ -24,7 +24,6 @@ import {
   Pause,
   X,
   History,
-  Search,
   FileText,
   Loader
 } from 'lucide-react';
@@ -178,6 +177,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [timeSpent, setTimeSpent] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [promptHistory, setPromptHistory] = useState<any[]>([]);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
   
@@ -186,6 +186,20 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const [auditResult, setAuditResult] = useState<AuditUICommandsOutput | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
+
+  // Load state from local storage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedPrompt = localStorage.getItem('starterPrompt');
+      if (savedPrompt) setStarterPrompt(savedPrompt);
+
+      const savedConsole = localStorage.getItem('looper-console');
+      if (savedConsole) setConsoleEntries(JSON.parse(savedConsole));
+      
+      const savedHistory = localStorage.getItem('looper-history');
+      if (savedHistory) setPromptHistory(JSON.parse(savedHistory));
+    }
+  }, []);
 
   const playTabBeep = () => {
     try {
@@ -227,6 +241,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   };
 
+  const addToHistory = (prompt: string) => {
+    if (!prompt.trim()) return;
+    const newEntry = {
+      prompt,
+      timestamp: Date.now(),
+    };
+    setPromptHistory(prev => [newEntry, ...prev.slice(0, 49)]);
+  };
+
   const handleStart = () => {
     if (isLoading) return;
     const willBeRunning = !isRunningRef.current;
@@ -234,6 +257,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     if(isPaused) setIsPaused(false);
   
     if (willBeRunning) {
+      addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
       const newTotalCount = totalCount + 1;
@@ -324,18 +348,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   }, [projectName, isLoading, isPaused, isRunning, user]);
 
 
+  // Save state to local storage on change
   useEffect(() => {
-     if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       localStorage.setItem('looper-total-count', totalCount.toString());
-     }
-  }, [totalCount]);
-
-  useEffect(() => {
-     if (typeof window !== 'undefined') {
       localStorage.setItem('starterPrompt', starterPrompt);
-      localStorage.setItem('logEntries', JSON.stringify(consoleEntries));
-     }
-  }, [starterPrompt, consoleEntries]);
+      localStorage.setItem('looper-console', JSON.stringify(consoleEntries));
+      localStorage.setItem('looper-history', JSON.stringify(promptHistory));
+    }
+  }, [totalCount, starterPrompt, consoleEntries, promptHistory]);
 
   const handleAuditPrompt = useCallback(async () => {
     if (isAuditing) return;
@@ -392,22 +413,33 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   };
 
   const handleInjectPrompt = () => {
+    addToHistory(starterPrompt);
     const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${starterPrompt.substring(0, 50)}...` };
     setConsoleEntries(prev => [newEntry, ...prev]);
   };
 
-  const captureIssues = () => setIssues([{ type: 'info', message: 'No issues detected. Page appears to be functioning correctly.' }]);
+  const captureIssues = () => {
+    const exampleIssues = [
+        { type: 'error', message: '404 Not Found for resource: /api/user-data' },
+        { type: 'warning', message: 'Image at /assets/logo.png is not optimized' },
+        { type: 'info', message: 'No <title> tag found on the page' },
+        { type: 'error', message: 'Uncaught TypeError: Cannot read properties of undefined' }
+    ];
+    setIssues(exampleIssues);
+    setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: `Captured ${exampleIssues.length} issues.` }, ...prev]);
+  };
+  
   const clearConsole = () => setConsoleEntries([]);
+
   const exportConsole = () => {
     if (typeof window === 'undefined') return;
-    const dataStr = JSON.stringify(consoleEntries, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `console-log-${new Date().toISOString()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(consoleEntries, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `console-log-${new Date().toISOString()}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
   };
 
   const handleGenerateSitemap = useCallback(async () => {
@@ -450,9 +482,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const TABS = {
     top: [
-      { id: 'audit', icon: Shield, title: "Audit", description: "Audit your app for issues." },
-      { id: 'design-system', icon: CheckCircle, title: "Design System", description: "Insert design/dev directives." },
-      { id: 'monitor', icon: Monitor, title: "Monitor", description: "Show project health dashboard.", children: (
+      { id: 'audit', icon: Shield, title: "Audit", description: "Review and analyze the app for issues or improvements." },
+      { id: 'design-system', icon: CheckCircle, title: "Design System", description: "Access and apply design/dev standards." },
+      { id: 'monitor', icon: Monitor, title: "Monitor", description: "View real-time project health and prompt crash risk.", children: (
         <div className="w-full h-full flex flex-col text-left">
           <h4 className="text-lg font-semibold text-white mb-2">Prompt Safety Analysis</h4>
            {isAuditing && (
@@ -473,9 +505,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
                     </div>
                  </div>
             )}
+            {!isAuditing && !auditResult && (
+              <div className="text-slate-400">Click this tab to analyze the current prompt.</div>
+            )}
         </div>
       ) },
-      { id: 'ai-maintenance', icon: Plus, title: "AI Maintenance", description: "Insert AI maintenance prompt." },
+      { id: 'ai-maintenance', icon: Plus, title: "AI Maintenance", description: "Insert prompt for AI-driven app maintenance." },
       { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts." },
     ],
     left: [
@@ -486,7 +521,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Upload className="mr-1 h-3 w-3" /> Export</Button>
           </div>
           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
-            {consoleEntries.slice(0, 50).map((entry, index) => (
+            {consoleEntries.length === 0 && <div className="text-slate-500">Console is empty.</div>}
+            {consoleEntries.slice(0, 100).map((entry, index) => (
               <div key={index} className="flex items-start gap-2 text-slate-400">
                 <span className="text-slate-500">[{new Date(entry.timestamp).toLocaleTimeString()}]</span>
                 <span className={cn('whitespace-pre-wrap break-all', entry.level === 'log' && 'text-slate-300', entry.level === 'api' && 'text-cyan-400', entry.level === 'error' && 'text-red-400', entry.level === 'warning' && 'text-yellow-400')}>[{entry.level}] {entry.message}</span>
@@ -501,6 +537,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
            </div>
            <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+            {issues.length === 0 && <div className="text-slate-500">Click "Capture Issues" to scan.</div>}
              {issues.map((issue, index) => (
                 <div key={index} className={cn("flex items-start gap-2 p-1 rounded", issue.type === 'info' && 'bg-blue-900/30 text-blue-300', issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300', issue.type === 'error' && 'bg-red-900/30 text-red-300')}>
                   <div className="font-bold uppercase">{issue.type}</div>
@@ -513,7 +550,20 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       { id: 'system', icon: Settings, title: "System Status", description: "View system information." },
     ],
     right: [
-      { id: 'history', icon: History, title: "History", description: "View prompt and action history." },
+      { id: 'history', icon: History, title: "History", description: "View prompt and action history.", children: (
+          <div className="w-full h-full flex flex-col text-left">
+            <h4 className="text-lg font-semibold text-white mb-2">Prompt History</h4>
+            <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+              {promptHistory.length === 0 && <div className="text-slate-500">No history yet.</div>}
+              {promptHistory.map((entry, index) => (
+                <div key={index} className="mb-2 p-2 rounded bg-slate-800/50 cursor-pointer hover:bg-slate-700/50" onClick={() => setStarterPrompt(entry.prompt)}>
+                  <div className="text-slate-400 text-xs mb-1">[{new Date(entry.timestamp).toLocaleString()}]</div>
+                  <div className="text-white truncate">{entry.prompt}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+      )},
       { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure.", children: (
         <div className="w-full h-full flex flex-col text-left">
           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto flex items-center justify-center">
@@ -524,7 +574,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               </div>
             )}
             {!isScanningSitemap && sitemap && sitemap.length === 0 && <div>No pages found.</div>}
-            {!isScanningSitemap && sitemap && (
+            {!isScanningSitemap && sitemap && sitemap.length > 0 && (
               <div className="w-full h-full overflow-y-auto">
                 {sitemap.map((page, index) => (
                   <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
@@ -534,6 +584,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
                   </div>
                 ))}
               </div>
+            )}
+            {!isScanningSitemap && !sitemap && (
+              <div className="text-slate-400 text-center">Click this tab to scan the current page for navigable links.</div>
             )}
           </div>
         </div>
@@ -561,8 +614,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     tabData.map(tab => 
       <Tab key={tab.id} {...tab} onClick={handleTabClick} onMouseEnter={playTabHoverBeep} isActive={activeTab === tab.id}
         className={cn(
-          (tab.id === 'console' || tab.id === 'issues' || tab.id === 'sitemap') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'console' && tab.id !== 'issues' && tab.id !== 'sitemap') && activeTab === tab.id && "w-96 h-52",
+          (tab.id === 'console' || tab.id === 'issues' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'console' && tab.id !== 'issues' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
         )}
       />
     );
@@ -609,7 +662,3 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     </div>
   );
 };
-
-    
-
-    
