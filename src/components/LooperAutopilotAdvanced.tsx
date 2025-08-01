@@ -82,7 +82,8 @@ const MainPanel = ({
   handleReset,
   starterPrompt,
   setStarterPrompt,
-  handleInjectPrompt
+  handleInjectPrompt,
+  isLoading
 }: any) => {
   return (
     <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative">
@@ -105,28 +106,32 @@ const MainPanel = ({
       </div>
       
       <div className="bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] rounded-2xl p-5 mb-6 shadow-[inset_14px_14px_40px_rgba(16,16,18,0.75),inset_-7px_-7px_30px_#262E32]">
-        <div className="flex justify-around items-center">
-          <div className="text-center">
-            <div className="text-xs uppercase text-slate-400 tracking-wider">Session</div>
-            <div className="text-2xl font-semibold text-white">{sessionCount}</div>
+        {isLoading ? (
+          <div className="text-center text-slate-400">Loading Stats...</div>
+        ) : (
+          <div className="flex justify-around items-center">
+            <div className="text-center">
+              <div className="text-xs uppercase text-slate-400 tracking-wider">Session</div>
+              <div className="text-2xl font-semibold text-white">{sessionCount}</div>
+            </div>
+            <div className="w-0.5 h-8 bg-gradient-to-b from-[#16171B] to-[#353A40] rounded-full"/>
+            <div className="text-center">
+              <div className="text-xs uppercase text-slate-400 tracking-wider">Total</div>
+              <div className="text-2xl font-semibold text-white">{totalCount}</div>
+            </div>
           </div>
-          <div className="w-0.5 h-8 bg-gradient-to-b from-[#16171B] to-[#353A40] rounded-full"/>
-          <div className="text-center">
-            <div className="text-xs uppercase text-slate-400 tracking-wider">Total</div>
-            <div className="text-2xl font-semibold text-white">{totalCount}</div>
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="mb-5">
         <div className="flex gap-2.5 mb-3">
-          <Button onClick={handleStart} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+          <Button onClick={handleStart} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" disabled={isLoading}>
             {isRunning ? <Square size={20} className="text-destructive" /> : <Play size={20} className="text-primary" />}
           </Button>
-          <Button onClick={handlePause} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+          <Button onClick={handlePause} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" disabled={isLoading}>
             <Pause size={20} className="text-yellow-500" />
           </Button>
-          <Button onClick={handleReset} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+          <Button onClick={handleReset} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" disabled={isLoading}>
             <Repeat size={20} className="text-accent" />
           </Button>
         </div>
@@ -142,7 +147,7 @@ const MainPanel = ({
       />
 
       <div className="flex gap-2.5">
-        <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200">
+        <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" disabled={isLoading}>
           <Zap size={20} className="text-accent" />
         </Button>
       </div>
@@ -167,6 +172,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   const [isThinking, setIsThinking] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
   
@@ -220,28 +226,28 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   // Effect for loading data from Firestore
   useEffect(() => {
     if (!projectName) return;
-  
+    setIsLoading(true);
     const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
     const docRef = doc(db, "projectStats", docId);
   
-    const getData = async () => {
-      try {
-        const docSnap = await getDoc(docRef);
+    getDoc(docRef)
+      .then((docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setTimeSpent(data.timeSpent || 0);
           setTotalCount(data.totalCount || 0);
         } else {
-          // If doc doesn't exist, initialize with 0
+          // If doc doesn't exist, we start from 0
           setTimeSpent(0);
           setTotalCount(0);
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error fetching project stats:", error);
-      }
-    };
-  
-    getData();
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   
     // Load local stuff
     if (typeof window !== 'undefined') {
@@ -255,15 +261,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   
   // Effect for tracking and saving timeSpent
   useEffect(() => {
-    if (!projectName) return;
-  
-    const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-    const docRef = doc(db, "projectStats", docId);
+    if (isLoading || !projectName) {
+      return;
+    }
   
     const interval = setInterval(() => {
       setTimeSpent(prevTime => {
         const newTime = prevTime + 1;
-        // Save to Firestore, merge to not overwrite totalCount
+        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+        const docRef = doc(db, "projectStats", docId);
         setDoc(docRef, { timeSpent: newTime }, { merge: true }).catch(error => {
            console.error("Error updating time spent:", error);
         });
@@ -272,7 +278,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     }, 1000);
   
     return () => clearInterval(interval);
-  }, [projectName]);
+  }, [projectName, isLoading]);
 
 
   useEffect(() => {
@@ -294,6 +300,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   };
 
   const handleStart = () => {
+    if (isLoading) return;
     const willBeRunning = !isRunningRef.current;
     setIsRunning(willBeRunning);
   
@@ -427,9 +434,13 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       { id: 'time', icon: Clock, title: "Time Management", description: "Track time spent on the project.", children: (
         <div className="w-full h-full flex flex-col items-center justify-center text-center">
           <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
-          <div className="text-4xl font-bold text-white font-mono tracking-wider">
-            {formatTime(timeSpent)}
-          </div>
+          {isLoading ? (
+            <div className="text-4xl font-bold text-white font-mono tracking-wider">Loading...</div>
+          ) : (
+            <div className="text-4xl font-bold text-white font-mono tracking-wider">
+              {formatTime(timeSpent)}
+            </div>
+          )}
         </div>
       ) },
     ],
@@ -475,6 +486,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
             starterPrompt={starterPrompt}
             setStarterPrompt={setStarterPrompt}
             handleInjectPrompt={handleInjectPrompt}
+            isLoading={isLoading}
           />
         </div>
 
