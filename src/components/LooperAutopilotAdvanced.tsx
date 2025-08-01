@@ -192,28 +192,36 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [promptHistory, setPromptHistory] = useState<any[]>([]);
+  
+  const timeSpentRef = useRef(timeSpent);
   const isRunningRef = useRef(isRunning);
-  isRunningRef.current = isRunning;
   
   const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
   const [isScanningSitemap, setIsScanningSitemap] = useState(false);
 
   const [auditResult, setAuditResult] = useState<AuditUICommandsOutput | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
-
-  const timeSpentRef = useRef(timeSpent);
-  timeSpentRef.current = timeSpent;
+  
+  useEffect(() => {
+    timeSpentRef.current = timeSpent;
+  }, [timeSpent]);
+  
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
 
   // Function to save time spent to Firestore
-  const saveTimeSpent = useCallback(() => {
+  const saveTimeSpent = useCallback(async () => {
     if (user && projectName && timeSpentRef.current > 0) {
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
-      setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true }).catch(error => {
+      try {
+        await setDoc(docRef, { timeSpent: timeSpentRef.current, totalCount }, { merge: true });
+      } catch (error) {
         console.error("Error updating time spent:", error);
-      });
+      }
     }
-  }, [user, projectName]);
+  }, [user, projectName, totalCount]);
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -280,7 +288,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const handleStart = () => {
     if (isLoading) return;
-    const willBeRunning = !isRunningRef.current;
+    const willBeRunning = !isRunning;
     setIsRunning(willBeRunning);
     if(isPaused) setIsPaused(false);
   
@@ -311,7 +319,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
-      saveTimeSpent();
+      // Removed saveTimeSpent from here to prevent excessive writes
     }
   };
 
