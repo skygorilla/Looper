@@ -105,9 +105,9 @@ const MainPanel = ({
 }: any) => {
   return (
     <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative">
-        <Button variant="ghost" size="icon" className="absolute top-4 right-[-10px] w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 hover:scale-110" data-tooltip="Close">
+        <button className="absolute top-4 right-[-10px] w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] hover:scale-105 active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" data-tooltip="Close">
             <X size={18} className="text-slate-400"/>
-        </Button>
+        </button>
       <div className="text-center mb-6 cursor-move">
         <div className="grid grid-cols-3 items-center h-6 mb-3">
             <div className="justify-self-end">
