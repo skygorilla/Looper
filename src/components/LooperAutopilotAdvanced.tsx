@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -243,9 +244,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     getData();
   
     // Load local stuff
-    setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
-    const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
-    setConsoleEntries(savedEntries);
+    if (typeof window !== 'undefined') {
+        setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
+        const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
+        setConsoleEntries(savedEntries);
+    }
     setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
   
   }, [projectName]);
