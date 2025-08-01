@@ -4,13 +4,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { 
-  Shield, 
-  CheckCircle, 
-  Monitor, 
   Plus, 
-  Zap, 
   Terminal, 
-  AlertTriangle, 
   Settings, 
   Activity, 
   Info,
@@ -18,12 +13,10 @@ import {
   Square,
   Repeat,
   Clock,
-  Globe,
   Trash2,
   Upload,
   Pause,
   X,
-  History,
   FileText,
   Loader
 } from 'lucide-react';
@@ -35,6 +28,40 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+
+
+// --- SVG Icon Components ---
+const IconAudit = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.623 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+  </svg>
+);
+const IconDesignSystem = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+);
+const IconMonitor = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.621a2.25 2.25 0 01-.659 1.59l-2.28 2.28a2.25 2.25 0 01-1.59.659H3.104M9.75 3.104L12 5.354M9.75 3.104L7.5 5.354M14.25 20.896v-5.621a2.25 2.25 0 00-.659-1.59l-2.28-2.28a2.25 2.25 0 00-1.59-.659H3.104m11.146 17.792L12 18.646m2.25 2.25L12 18.646m0 0L9.75 20.896m2.25-2.25L9.75 18.646m6.396-11.146L18.49 5.354m-2.25 2.25L18.49 5.354m0 0L20.896 7.5m-2.406-2.146L20.896 7.5"></path>
+    </svg>
+);
+const IconActions = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+);
+const IconIssues = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+  </svg>
+);
+const IconHistory = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+const IconSitemap = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3s-4.5 4.03-4.5 9 2.015 9 4.5 9zm0 0V9m0 0L9 6m3 3l3-3" />
+  </svg>
+);
 
 
 interface TabProps {
@@ -165,7 +192,7 @@ const MainPanel = ({
 
       <div className="flex gap-2.5">
         <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" disabled={isLoading}>
-          <Zap size={20} className="text-accent" />
+          <IconActions size={20} className="text-accent" />
         </Button>
       </div>
 
@@ -495,9 +522,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const TABS = {
     top: [
-      { id: 'audit', icon: Shield, title: "Audit", description: "Review and analyze the app for issues or improvements." },
-      { id: 'design-system', icon: CheckCircle, title: "Design System", description: "Access and apply design/dev standards." },
-      { id: 'monitor', icon: Monitor, title: "Monitor", description: "View real-time project health and prompt crash risk.", children: (
+      { id: 'audit', icon: IconAudit, title: "Audit", description: "Review and analyze the app for issues or improvements." },
+      { id: 'design-system', icon: IconDesignSystem, title: "Design System", description: "Access and apply design/dev standards." },
+      { id: 'monitor', icon: IconMonitor, title: "Monitor", description: "View real-time project health and prompt crash risk.", children: (
         <div className="w-full h-full flex flex-col text-left">
           <h4 className="text-lg font-semibold text-white mb-2">Prompt Safety Analysis</h4>
            {isAuditing && (
@@ -524,7 +551,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         </div>
       ) },
       { id: 'ai-maintenance', icon: Plus, title: "AI Maintenance", description: "Insert prompt for AI-driven app maintenance." },
-      { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts." },
+      { id: 'actions', icon: IconActions, title: "Actions", description: "Quick actions and shortcuts." },
     ],
     left: [
       { id: 'console', icon: Terminal, title: "Console", description: "View system console output.", children: (
@@ -544,7 +571,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </div>
         </div>
       ) },
-      { id: 'issues', icon: AlertTriangle, title: "Issues", description: "DevTools-style issue detection.", children: (
+      { id: 'issues', icon: IconIssues, title: "Issues", description: "DevTools-style issue detection.", children: (
          <div className="w-full h-full flex flex-col text-left">
            <div className="flex gap-2 mb-2">
             <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
@@ -563,7 +590,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       { id: 'system', icon: Settings, title: "System Status", description: "View system information." },
     ],
     right: [
-      { id: 'history', icon: History, title: "History", description: "View prompt and action history.", children: (
+      { id: 'history', icon: IconHistory, title: "History", description: "View prompt and action history.", children: (
           <div className="w-full h-full flex flex-col text-left">
             <h4 className="text-lg font-semibold text-white mb-2">Prompt History</h4>
             <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
@@ -577,7 +604,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </div>
           </div>
       )},
-      { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure.", children: (
+      { id: 'sitemap', icon: IconSitemap, title: "Site Map", description: "Navigate site structure.", children: (
         <div className="w-full h-full flex flex-col text-left">
           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto flex items-center justify-center">
             {isScanningSitemap && (
