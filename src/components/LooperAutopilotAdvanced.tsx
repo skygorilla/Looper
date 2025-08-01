@@ -229,7 +229,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setTimeSpent(data.secondsSpent || 0);
+          setTimeSpent(data.timeSpent || 0);
           setTotalCount(data.totalCount || 0);
         } else {
           // If doc doesn't exist, initialize with 0
@@ -264,7 +264,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       setTimeSpent(prevTime => {
         const newTime = prevTime + 1;
         // Save to Firestore, merge to not overwrite totalCount
-        setDoc(docRef, { secondsSpent: newTime }, { merge: true }).catch(error => {
+        setDoc(docRef, { timeSpent: newTime }, { merge: true }).catch(error => {
            console.error("Error updating time spent:", error);
         });
         return newTime;
@@ -304,9 +304,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       setTotalCount(newTotalCount);
   
       // Save new total count to Firestore
-      const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-      const docRef = doc(db, "projectStats", docId);
-      setDoc(docRef, { totalCount: newTotalCount }, { merge: true });
+      if (projectName) {
+        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+        const docRef = doc(db, "projectStats", docId);
+        setDoc(docRef, { totalCount: newTotalCount }, { merge: true });
+      }
   
       setStatusText('Processing...');
       setIsThinking(true);
