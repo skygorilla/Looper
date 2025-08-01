@@ -159,7 +159,7 @@ const MainPanel = ({
   )
 }
 
-export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?: string}> = ({ className, projectName = "Default Project" }) => {
+export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -216,101 +216,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (!currentUser) {
-        // We could handle the signed-out state here if needed
-        setIsLoading(true); 
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Effect for loading data from Firestore, dependent on user and projectName
-  useEffect(() => {
-    if (!user || !projectName) {
-      setIsLoading(true);
-      return;
-    }
-
-    setIsLoading(true);
-    const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-    const docRef = doc(db, "projectStats", docId);
-  
-    getDoc(docRef)
-      .then((docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setTimeSpent(data.timeSpent || 0);
-          setTotalCount(data.totalCount || 0);
-        } else {
-          // If doc doesn't exist, we start from 0
-          setTimeSpent(0);
-          setTotalCount(0);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching project stats:", error);
-        // Set to 0 on error to avoid undefined state
-        setTimeSpent(0);
-        setTotalCount(0);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  
-    // Load local stuff
-    if (typeof window !== 'undefined') {
-        setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
-        const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
-        setConsoleEntries(savedEntries);
-    }
-    setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
-  
-  }, [user, projectName]);
-  
-  // Effect for tracking and saving timeSpent
-  useEffect(() => {
-    if (isLoading || !projectName || isPaused || !isRunning) {
-      return;
-    }
-  
-    const interval = setInterval(() => {
-      setTimeSpent(prevTime => {
-        const newTime = prevTime + 1;
-        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-        const docRef = doc(db, "projectStats", docId);
-        // We only save time, totalCount is saved on start
-        setDoc(docRef, { timeSpent: newTime }, { merge: true }).catch(error => {
-           console.error("Error updating time spent:", error);
-        });
-        return newTime;
-      });
-    }, 1000);
-  
-    return () => clearInterval(interval);
-  }, [projectName, isLoading, isPaused, isRunning]);
-
-
-  useEffect(() => {
-     if (typeof window !== 'undefined') {
-      localStorage.setItem('looper-total-count', totalCount.toString());
-     }
-  }, [totalCount]);
-
-  useEffect(() => {
-     if (typeof window !== 'undefined') {
-      localStorage.setItem('starterPrompt', starterPrompt);
-      localStorage.setItem('logEntries', JSON.stringify(consoleEntries));
-     }
-  }, [starterPrompt, consoleEntries]);
-
-  const handleTabClick = (tabId: string) => {
-    playTabBeep();
-    setActiveTab(activeTab === tabId ? null : tabId);
-  };
-
   const handleStart = () => {
     if (isLoading) return;
     const willBeRunning = !isRunningRef.current;
@@ -323,7 +228,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       const newTotalCount = totalCount + 1;
       setTotalCount(newTotalCount);
   
-      // Save new total count to Firestore
       if (projectName && user) {
         const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
         const docRef = doc(db, "projectStats", docId);
@@ -345,6 +249,86 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
       setStatusText('Stopped');
       setIsThinking(false);
     }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser && projectName) {
+        setIsLoading(true);
+        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+        const docRef = doc(db, "projectStats", docId);
+        try {
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setTimeSpent(data.timeSpent || 0);
+            setTotalCount(data.totalCount || 0);
+          } else {
+            setTimeSpent(0);
+            setTotalCount(0);
+          }
+        } catch (error) {
+          console.error("Error fetching project stats:", error);
+          setTimeSpent(0);
+          setTotalCount(0);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [projectName]);
+
+
+  // Auto-start the timer once everything is loaded
+  useEffect(() => {
+    if (!isLoading && !isRunning && user && projectName) {
+      handleStart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, user, projectName]);
+
+
+  useEffect(() => {
+    if (isLoading || !projectName || isPaused || !isRunning || !user) {
+      return;
+    }
+  
+    const interval = setInterval(() => {
+      setTimeSpent(prevTime => {
+        const newTime = prevTime + 1;
+        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+        const docRef = doc(db, "projectStats", docId);
+
+        setDoc(docRef, { timeSpent: newTime }, { merge: true }).catch(error => {
+           console.error("Error updating time spent:", error);
+        });
+        return newTime;
+      });
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [projectName, isLoading, isPaused, isRunning, user]);
+
+
+  useEffect(() => {
+     if (typeof window !== 'undefined') {
+      localStorage.setItem('looper-total-count', totalCount.toString());
+     }
+  }, [totalCount]);
+
+  useEffect(() => {
+     if (typeof window !== 'undefined') {
+      localStorage.setItem('starterPrompt', starterPrompt);
+      localStorage.setItem('logEntries', JSON.stringify(consoleEntries));
+     }
+  }, [starterPrompt, consoleEntries]);
+
+  const handleTabClick = (tabId: string) => {
+    playTabBeep();
+    setActiveTab(activeTab === tabId ? null : tabId);
   };
 
   const handlePause = () => {
