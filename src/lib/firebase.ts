@@ -6,15 +6,17 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged, type User } from "firebase/auth";
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyBJ2HXPQK96daVePwiubuyUr6QyovlhT54",
+  authDomain: "looper-61c39.firebaseapp.com",
+  projectId: "looper-61c39",
+  storageBucket: "looper-61c39.appspot.com",
+  messagingSenderId: "1058247668506",
+  appId: "1:1058247668506:web:c33602615c9d92386df2a3",
+  measurementId: "G-G8YLJK4LSG"
 };
+
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
