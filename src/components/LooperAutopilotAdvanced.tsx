@@ -21,7 +21,8 @@ import {
   Trash2,
   Upload,
   Pause,
-  X
+  X,
+  History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -159,8 +160,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ classN
   const [starterPrompt, setStarterPrompt] = useState('');
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
+  const [timeSpent, setTimeSpent] = useState(0);
   const isRunningRef = useRef(isRunning);
   isRunningRef.current = isRunning;
+  const projectName = "Looper";
 
   const playTabBeep = () => {
     try {
@@ -204,13 +207,27 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ classN
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const timeKey = `looper-time-spent-${projectName}`;
+      const savedTime = parseInt(localStorage.getItem(timeKey) || '0', 10);
+      setTimeSpent(savedTime);
+      
+      const interval = setInterval(() => {
+        setTimeSpent(prevTime => {
+          const newTime = prevTime + 1;
+          localStorage.setItem(timeKey, newTime.toString());
+          return newTime;
+        });
+      }, 1000);
+
       setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
       setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
       const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
       setConsoleEntries(savedEntries);
       setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
+
+      return () => clearInterval(interval);
     }
-  }, []);
+  }, [projectName]);
 
   useEffect(() => {
      if (typeof window !== 'undefined') {
@@ -294,6 +311,16 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ classN
     URL.revokeObjectURL(url);
   };
 
+  const formatTime = (totalSeconds: number) => {
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    totalSeconds %= (3600 * 24);
+    const hours = Math.floor(totalSeconds / 3600);
+    totalSeconds %= 3600;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
   const TABS = {
     top: [
       { id: 'audit', icon: Shield, title: "Audit", description: "Audit your app for issues." },
@@ -337,8 +364,16 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string}> = ({ classN
       { id: 'system', icon: Settings, title: "System Status", description: "View system information." },
     ],
     right: [
-      { id: 'history', icon: Clock, title: "History", description: "View prompt and action history." },
+      { id: 'history', icon: History, title: "History", description: "View prompt and action history." },
       { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure." },
+      { id: 'time', icon: Clock, title: "Time Management", description: "Track time spent on the project.", children: (
+        <div className="w-full h-full flex flex-col items-center justify-center text-center">
+          <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
+          <div className="text-4xl font-bold text-white font-mono tracking-wider">
+            {formatTime(timeSpent)}
+          </div>
+        </div>
+      ) },
     ],
     bottom: [
       { id: 'activity', icon: Activity, title: "Activity Log", description: "View system activity." },
