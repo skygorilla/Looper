@@ -218,38 +218,37 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
 
   useEffect(() => {
     if (!projectName) return;
-
-    const getTimeSpent = async () => {
-      const docId = `time_log_${projectName.replace(/\s+/g, '_')}`;
-      const docRef = doc(db, "projectTime", docId);
+  
+    const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+    const docRef = doc(db, "projectStats", docId);
+  
+    const getData = async () => {
       const docSnap = await getDoc(docRef);
-
       if (docSnap.exists()) {
-        setTimeSpent(docSnap.data().secondsSpent || 0);
+        const data = docSnap.data();
+        setTimeSpent(data.secondsSpent || 0);
+        setTotalCount(data.totalCount || 0);
       } else {
         setTimeSpent(0);
+        setTotalCount(0);
       }
     };
-
-    getTimeSpent();
-    
+  
+    getData();
+  
     const interval = setInterval(async () => {
-      const newTime = (prevTime: number) => {
+      setTimeSpent(prevTime => {
         const updatedTime = prevTime + 1;
-        const docId = `time_log_${projectName.replace(/\s+/g, '_')}`;
-        const docRef = doc(db, "projectTime", docId);
-        setDoc(docRef, { secondsSpent: updatedTime, lastUpdated: serverTimestamp() }, { merge: true });
+        setDoc(docRef, { secondsSpent: updatedTime }, { merge: true });
         return updatedTime;
-      }
-      setTimeSpent(newTime);
+      });
     }, 1000);
-
-    setTotalCount(parseInt(localStorage.getItem('looper-total-count') || '0'));
+  
     setStarterPrompt(localStorage.getItem('starterPrompt') || '🤖 Smart Analysis Mode: Analyzing current page context...');
     const savedEntries = JSON.parse(localStorage.getItem('logEntries') || '[]');
     setConsoleEntries(savedEntries);
     setIssues([{ type: 'info', message: 'Click "Capture Issues" to scan for problems and warnings' }]);
-
+  
     return () => clearInterval(interval);
   }, [projectName]);
 
@@ -275,13 +274,23 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName?
   const handleStart = () => {
     const willBeRunning = !isRunningRef.current;
     setIsRunning(willBeRunning);
+  
     if (willBeRunning) {
       setSessionCount(prev => prev + 1);
-      setTotalCount(prev => prev + 1);
+      
+      const newTotalCount = totalCount + 1;
+      setTotalCount(newTotalCount);
+  
+      // Save new total count to Firestore
+      const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+      const docRef = doc(db, "projectStats", docId);
+      setDoc(docRef, { totalCount: newTotalCount }, { merge: true });
+  
       setStatusText('Processing...');
       setIsThinking(true);
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${starterPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
+  
       setTimeout(() => {
         if(isRunningRef.current) {
            setStatusText('Task Complete');
