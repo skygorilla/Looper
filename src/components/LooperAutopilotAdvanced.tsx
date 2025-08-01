@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { 
   Shield, 
@@ -25,7 +25,8 @@ import {
   X,
   History,
   Search,
-  FileText
+  FileText,
+  Loader
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -381,8 +382,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     URL.revokeObjectURL(url);
   };
 
-  const handleGenerateSitemap = async () => {
-    if (typeof window === 'undefined') return;
+  const handleGenerateSitemap = useCallback(async () => {
+    if (typeof window === 'undefined' || isScanningSitemap) return;
     setIsScanningSitemap(true);
     setSitemap(null);
     try {
@@ -395,7 +396,13 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } finally {
       setIsScanningSitemap(false);
     }
-  };
+  }, [isScanningSitemap]);
+
+  useEffect(() => {
+    if (activeTab === 'sitemap' && !sitemap) {
+        handleGenerateSitemap();
+    }
+  }, [activeTab, sitemap, handleGenerateSitemap]);
 
   const formatTime = (totalSeconds: number) => {
     const days = Math.floor(totalSeconds / (3600 * 24));
@@ -453,20 +460,25 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       { id: 'history', icon: History, title: "History", description: "View prompt and action history." },
       { id: 'sitemap', icon: Globe, title: "Site Map", description: "Navigate site structure.", children: (
         <div className="w-full h-full flex flex-col text-left">
-          <Button onClick={handleGenerateSitemap} disabled={isScanningSitemap} className="mb-2">
-            <Search className="mr-2 h-4 w-4" />
-            {isScanningSitemap ? 'Scanning...' : 'Scan Project'}
-          </Button>
-          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
-            {isScanningSitemap && <div>Analyzing page...</div>}
-            {sitemap && sitemap.length === 0 && <div>No pages found.</div>}
-            {sitemap && sitemap.map((page, index) => (
-              <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
-                <div className="font-bold text-white flex items-center"><FileText size={14} className="mr-2" />{page.title}</div>
-                <div className="text-cyan-400 text-xs my-1">{page.path}</div>
-                <div className="text-slate-400">{page.description}</div>
+          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto flex items-center justify-center">
+            {isScanningSitemap && (
+              <div className="flex flex-col items-center gap-2 text-slate-400">
+                <Loader className="animate-spin h-8 w-8" />
+                <span>Scanning Project...</span>
               </div>
-            ))}
+            )}
+            {!isScanningSitemap && sitemap && sitemap.length === 0 && <div>No pages found.</div>}
+            {!isScanningSitemap && sitemap && (
+              <div className="w-full h-full overflow-y-auto">
+                {sitemap.map((page, index) => (
+                  <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
+                    <div className="font-bold text-white flex items-center"><FileText size={14} className="mr-2" />{page.title}</div>
+                    <div className="text-cyan-400 text-xs my-1">{page.path}</div>
+                    <div className="text-slate-400">{page.description}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) },
@@ -541,3 +553,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     </div>
   );
 };
+
+    
