@@ -4,11 +4,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { 
-  Plus, 
-  Terminal, 
-  Settings, 
-  Activity, 
-  Info,
   Play,
   Square,
   Repeat,
@@ -20,11 +15,14 @@ import {
   FileText,
   Loader,
   ShieldCheck,
-  Palette,
   Bot,
   Zap,
   AlertTriangle,
-  FileClock
+  FileClock,
+  Settings,
+  Terminal,
+  Activity,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
