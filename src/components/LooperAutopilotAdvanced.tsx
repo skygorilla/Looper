@@ -78,12 +78,14 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, childre
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{tabContent}</TooltipTrigger>
-      <TooltipContent>
-        <p>{title}</p>
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{tabContent}</TooltipTrigger>
+        <TooltipContent>
+          <p>{title}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -199,6 +201,20 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [auditResult, setAuditResult] = useState<AuditUICommandsOutput | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
 
+  const timeSpentRef = useRef(timeSpent);
+  timeSpentRef.current = timeSpent;
+
+  // Function to save time spent to Firestore
+  const saveTimeSpent = useCallback(() => {
+    if (user && projectName && timeSpentRef.current > 0) {
+      const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+      const docRef = doc(db, "projectStats", docId);
+      setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true }).catch(error => {
+        console.error("Error updating time spent:", error);
+      });
+    }
+  }, [user, projectName]);
+
   // Load state from local storage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -295,6 +311,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
+      saveTimeSpent();
     }
   };
 
@@ -338,26 +355,23 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   }, [isLoading, user, projectName]);
 
 
+  // Timer logic
   useEffect(() => {
-    if (isLoading || !projectName || isPaused || !isRunning || !user) {
-      return;
+    let interval: NodeJS.Timeout;
+    if (isRunning && !isPaused) {
+      interval = setInterval(() => {
+        setTimeSpent(prevTime => prevTime + 1);
+      }, 1000);
     }
-  
-    const interval = setInterval(() => {
-      setTimeSpent(prevTime => {
-        const newTime = prevTime + 1;
-        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-        const docRef = doc(db, "projectStats", docId);
-
-        setDoc(docRef, { timeSpent: newTime }, { merge: true }).catch(error => {
-           console.error("Error updating time spent:", error);
-        });
-        return newTime;
-      });
-    }, 1000);
-  
     return () => clearInterval(interval);
-  }, [projectName, isLoading, isPaused, isRunning, user]);
+  }, [isRunning, isPaused]);
+
+  // Save time on unmount
+  useEffect(() => {
+    return () => {
+      saveTimeSpent();
+    };
+  }, [saveTimeSpent]);
 
 
   // Save state to local storage on change
@@ -406,6 +420,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         if(willBePaused) {
           setStatusText('Paused');
           setIsThinking(false);
+          saveTimeSpent();
         } else {
           setStatusText('Processing...');
           if(isRunning) setIsThinking(true);
@@ -633,7 +648,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     );
 
   return (
-    <TooltipProvider>
       <div className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}>
           {/* Top */}
           <div className="col-start-2 row-start-1 flex flex-row gap-5">
@@ -673,6 +687,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               {renderTabs(TABS.bottom)}
           </div>
       </div>
-    </TooltipProvider>
   );
 };
