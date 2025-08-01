@@ -34,6 +34,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 interface TabProps {
@@ -49,7 +50,7 @@ interface TabProps {
 }
 
 const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, children, onClick, onMouseEnter, isActive, className, description }) => {
-  return (
+  const tabContent = (
     <div
       className={cn(
         "relative cursor-pointer transition-all duration-400 ease-in-out",
@@ -60,7 +61,6 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, children, onClick, onM
       )}
       onClick={() => onClick(id)}
       onMouseEnter={onMouseEnter}
-      data-tooltip={title}
     >
       <div className="flex items-center justify-center w-14 h-14">
         <Icon size={24} className={cn("text-slate-400 transition-opacity", isActive && "opacity-0")} />
@@ -72,6 +72,19 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, title, children, onClick, onM
         </div>
       )}
     </div>
+  );
+
+  if (isActive) {
+    return tabContent;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{tabContent}</TooltipTrigger>
+      <TooltipContent>
+        <p>{title}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -621,44 +634,46 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     );
 
   return (
-    <div className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}>
-        {/* Top */}
-        <div className="col-start-2 row-start-1 flex flex-row gap-5">
-          {renderTabs(TABS.top)}
-        </div>
-        
-        {/* Left */}
-        <div className="col-start-1 row-start-2 flex flex-col gap-5 justify-self-end">
-          {renderTabs(TABS.left)}
-        </div>
-        
-        {/* Center */}
-        <div className="col-start-2 row-start-2">
-          <MainPanel 
-            sessionCount={sessionCount}
-            totalCount={totalCount}
-            statusText={statusText}
-            isRunning={isRunning}
-            isThinking={isThinking}
-            handleStart={handleStart}
-            handlePause={handlePause}
-            handleReset={handleReset}
-            starterPrompt={starterPrompt}
-            setStarterPrompt={setStarterPrompt}
-            handleInjectPrompt={handleInjectPrompt}
-            isLoading={isLoading}
-          />
-        </div>
+    <TooltipProvider>
+      <div className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}>
+          {/* Top */}
+          <div className="col-start-2 row-start-1 flex flex-row gap-5">
+            {renderTabs(TABS.top)}
+          </div>
+          
+          {/* Left */}
+          <div className="col-start-1 row-start-2 flex flex-col gap-5 justify-self-end">
+            {renderTabs(TABS.left)}
+          </div>
+          
+          {/* Center */}
+          <div className="col-start-2 row-start-2">
+            <MainPanel 
+              sessionCount={sessionCount}
+              totalCount={totalCount}
+              statusText={statusText}
+              isRunning={isRunning}
+              isThinking={isThinking}
+              handleStart={handleStart}
+              handlePause={handlePause}
+              handleReset={handleReset}
+              starterPrompt={starterPrompt}
+              setStarterPrompt={setStarterPrompt}
+              handleInjectPrompt={handleInjectPrompt}
+              isLoading={isLoading}
+            />
+          </div>
 
-        {/* Right */}
-        <div className="col-start-3 row-start-2 flex flex-col gap-5 justify-self-start">
-          {renderTabs(TABS.right)}
-        </div>
+          {/* Right */}
+          <div className="col-start-3 row-start-2 flex flex-col gap-5 justify-self-start">
+            {renderTabs(TABS.right)}
+          </div>
 
-        {/* Bottom */}
-        <div className="col-start-2 row-start-3 flex flex-row gap-5">
-            {renderTabs(TABS.bottom)}
-        </div>
-    </div>
+          {/* Bottom */}
+          <div className="col-start-2 row-start-3 flex flex-row gap-5">
+              {renderTabs(TABS.bottom)}
+          </div>
+      </div>
+    </TooltipProvider>
   );
 };
