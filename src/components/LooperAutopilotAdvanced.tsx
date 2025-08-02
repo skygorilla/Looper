@@ -94,10 +94,6 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, childre
     </div>
   );
 
-  if (isActive) {
-    return tabContent;
-  }
-
   return (
     <TooltipProvider>
       <Tooltip>
@@ -239,13 +235,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        await updateDoc(docRef, { timeSpent: timeSpentRef.current });
+        await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
       } catch (error) {
-        if ((error as any).code === 'not-found') {
-          await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
-        } else {
           console.error("Error saving time spent:", error);
-        }
       }
     }
   }, [user, projectName]);
@@ -322,7 +314,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     if (willBeRunning) {
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
-      setTotalCount(prev => prev + 1);
+      setTotalCount(prev => prev + 1); // Only update local state now
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -338,6 +330,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
+      saveTimeSpent();
     }
   };
 
@@ -355,10 +348,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             setTimeSpent(data.timeSpent || 0);
             setTotalCount(data.totalCount || 0);
           } else {
-            // If the document doesn't exist, initialize locally and in Firestore
+            await setDoc(docRef, { timeSpent: 0, totalCount: 0 }, { merge: true });
             setTimeSpent(0);
             setTotalCount(0);
-            await setDoc(docRef, { timeSpent: 0, totalCount: 0 });
           }
         } catch (error) {
           console.error("Error fetching project stats:", error);
@@ -396,8 +388,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   // Save time on unmount
   useEffect(() => {
+    window.addEventListener('beforeunload', saveTimeSpent);
     return () => {
       saveTimeSpent();
+      window.removeEventListener('beforeunload', saveTimeSpent);
     };
   }, [saveTimeSpent]);
 
@@ -539,11 +533,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
   const getTabsConfig = (projectName: string) => ({
-    top: [
-      { id: 'monitor', icon: ShieldCheck, title: "Monitor", description: `View real-time project health and prompt crash risk for '${projectName}'.`, iconClassName: "text-primary" },
-      { id: 'ai-maintenance', icon: Bot, title: "AI Maintenance", description: `Insert prompt for AI-driven maintenance on '${projectName}'.`, iconClassName: "text-accent" },
-      { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts.", iconClassName: "text-yellow-500" },
-    ],
     left: [
        { id: 'devtools', icon: Terminal, title: "DevTools", description: "View console logs and captured issues.", iconClassName: "text-slate-400", children: (
         <div className="w-full h-full flex flex-col text-left">
@@ -643,7 +632,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </Tabs>
         </div>
       ) },
-      { id: 'system', icon: Settings, title: "System Status", description: "View system information.", iconClassName: "text-slate-400" },
     ],
     right: [
       { id: 'history', icon: FileClock, title: "History", description: `View prompt history for '${projectName}'.`, iconClassName: "text-accent", children: (
@@ -660,7 +648,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </div>
           </div>
       )},
-      { id: 'sitemap', icon: FileText, title: "Site Map", description: `Navigate site structure for '${projectName}'.`, iconClassName: "text-primary" },
       { id: 'time', icon: Clock, title: "Time Management", description: `Track time spent on the '${projectName}' project.`, iconClassName: "text-yellow-500", children: (
         <div className="w-full h-full flex flex-col items-center justify-center text-center">
           <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
@@ -674,37 +661,25 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         </div>
       ) },
     ],
-    bottom: [
-      { id: 'activity', icon: Activity, title: "Activity Log", description: "View system activity.", iconClassName: "text-slate-400" },
-      { id: 'about', icon: Info, title: "About", description: "Information about the system.", iconClassName: "text-slate-400" },
-    ]
   });
 
   const TABS = getTabsConfig(projectName);
 
   const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'onMouseEnter' | 'isActive' | 'consoleCount' | 'issueCount'>[]) => 
     tabData.map(tab => 
-      <TooltipProvider key={tab.id}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Tab {...tab} 
-              onClick={handleTabClick} 
-              onMouseEnter={playTabHoverBeep} 
-              isActive={activeTab === tab.id}
-              consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
-              issueCount={tab.id === 'devtools' ? issues.length : undefined}
-              className={cn(
-                (tab.id === 'devtools') && activeTab === tab.id && "w-96 h-[450px]",
-                (tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
-                (tab.id !== 'devtools' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
-              )}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{tab.title}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tab {...tab} 
+        key={tab.id}
+        onClick={handleTabClick} 
+        onMouseEnter={playTabHoverBeep} 
+        isActive={activeTab === tab.id}
+        consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
+        issueCount={tab.id === 'devtools' ? issues.length : undefined}
+        className={cn(
+          (tab.id === 'devtools') && activeTab === tab.id && "w-96 h-[450px]",
+          (tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'devtools' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
+        )}
+      />
     );
 
   const handleOutsideClick = () => {
@@ -715,21 +690,16 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   return (
       <div 
-        className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}
+        className={cn("relative grid grid-cols-[auto_1fr_auto] grid-rows-1 gap-5 items-center justify-items-center p-5 transform scale-90", className)}
         onClick={handleOutsideClick}
       >
-          {/* Top */}
-          <div className="col-start-2 row-start-1 flex flex-row gap-5">
-            {renderTabs(TABS.top)}
-          </div>
-          
           {/* Left */}
-          <div className="col-start-1 row-start-2 flex flex-col gap-5 justify-self-end">
+          <div className="col-start-1 flex flex-col gap-5 justify-self-end">
             {renderTabs(TABS.left)}
           </div>
           
           {/* Center */}
-          <div className="col-start-2 row-start-2">
+          <div className="col-start-2">
             <MainPanel 
               sessionCount={sessionCount}
               totalCount={totalCount}
@@ -747,14 +717,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </div>
 
           {/* Right */}
-          <div className="col-start-3 row-start-2 flex flex-col gap-5 justify-self-start">
+          <div className="col-start-3 flex flex-col gap-5 justify-self-start">
             {renderTabs(TABS.right)}
-          </div>
-
-          {/* Bottom */}
-          <div className="col-start-2 row-start-3 flex flex-row gap-5">
-              {renderTabs(TABS.bottom)}
           </div>
       </div>
   );
 };
+
