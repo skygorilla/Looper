@@ -200,6 +200,7 @@ const MainPanel = ({
 
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [activeDevToolsTab, setActiveDevToolsTab] = useState('console');
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
@@ -233,17 +234,17 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   // Function to save time spent to Firestore
   const saveTimeSpent = useCallback(async () => {
-    if (user && projectName && timeSpentRef.current > 0) {
+    if (user && projectName) {
+      if (timeSpentRef.current === 0) return;
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
         await updateDoc(docRef, { timeSpent: timeSpentRef.current });
       } catch (error) {
-        // If the doc doesn't exist, create it.
         if ((error as any).code === 'not-found') {
           await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
         } else {
-          console.error("Error updating time spent:", error);
+          console.error("Error saving time spent:", error);
         }
       }
     }
@@ -321,8 +322,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     if (willBeRunning) {
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
-      
-      // Only increment totalCount in local state.
       setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
@@ -339,7 +338,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
-      saveTimeSpent();
     }
   };
 
@@ -433,14 +431,18 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     playTabBeep();
     const newActiveTab = activeTab === tabId ? null : tabId;
     setActiveTab(newActiveTab);
-
-    if (newActiveTab === 'sitemap') {
+  };
+  
+  const handleDevToolsSubTabChange = (value: string) => {
+    setActiveDevToolsTab(value);
+    if (value === 'sitemap') {
       handleGenerateSitemap();
     }
-    if (newActiveTab === 'monitor') {
+    if (value === 'audit') {
       handleAuditPrompt();
     }
-  };
+  }
+
 
   const handlePause = () => {
     if(isRunning) {
@@ -538,44 +540,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const getTabsConfig = (projectName: string) => ({
     top: [
-      { id: 'monitor', icon: ShieldCheck, title: "Monitor", description: `View real-time project health and prompt crash risk for '${projectName}'.`, iconClassName: "text-primary", children: (
-        <div className="w-full h-full flex flex-col text-left">
-          <h4 className="text-lg font-semibold text-white mb-2">Prompt Safety Analysis</h4>
-           {isAuditing && (
-              <div className="flex flex-col items-center justify-center gap-2 text-slate-400 h-full">
-                <Loader className="animate-spin h-8 w-8" />
-                <span>Auditing Prompt...</span>
-              </div>
-            )}
-            {!isAuditing && auditResult && (
-                 <div className="flex flex-col gap-3 text-sm">
-                    <div>
-                        <span className="font-semibold text-slate-400">Risk Level: </span>
-                        <span className={cn("font-bold", getRiskColor(auditResult.riskLevel))}>{auditResult.riskLevel}</span>
-                    </div>
-                    <div>
-                         <span className="font-semibold text-slate-400">Assessment:</span>
-                         <p className="text-slate-300 bg-slate-900/50 rounded-md p-2 mt-1">{auditResult.assessment}</p>
-                    </div>
-                 </div>
-            )}
-            {!isAuditing && !auditResult && (
-              <div className="text-slate-400">Click this tab to analyze the current prompt.</div>
-            )}
-        </div>
-      ) },
+      { id: 'monitor', icon: ShieldCheck, title: "Monitor", description: `View real-time project health and prompt crash risk for '${projectName}'.`, iconClassName: "text-primary" },
       { id: 'ai-maintenance', icon: Bot, title: "AI Maintenance", description: `Insert prompt for AI-driven maintenance on '${projectName}'.`, iconClassName: "text-accent" },
       { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts.", iconClassName: "text-yellow-500" },
     ],
     left: [
        { id: 'devtools', icon: Terminal, title: "DevTools", description: "View console logs and captured issues.", iconClassName: "text-slate-400", children: (
         <div className="w-full h-full flex flex-col text-left">
-          <Tabs defaultValue="console" className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue={activeDevToolsTab} onValueChange={handleDevToolsSubTabChange} className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="console">Console</TabsTrigger>
               <TabsTrigger value="issues">Issues</TabsTrigger>
+              <TabsTrigger value="audit">Audit</TabsTrigger>
+              <TabsTrigger value="sitemap">Sitemap</TabsTrigger>
             </TabsList>
-            <TabsContent value="console" className="flex-grow">
+            <TabsContent value="console" className="flex-grow mt-0">
                <div className="w-full h-full flex flex-col text-left">
                   <div className="flex gap-2 my-2">
                     <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
@@ -592,7 +571,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
                   </div>
                 </div>
             </TabsContent>
-            <TabsContent value="issues" className="flex-grow">
+            <TabsContent value="issues" className="flex-grow mt-0">
               <div className="w-full h-full flex flex-col text-left">
                 <div className="flex gap-2 my-2">
                   <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
@@ -605,6 +584,59 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
                         <div>{issue.message}</div>
                       </div>
                     ))}
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="audit" className="flex-grow mt-0">
+              <div className="w-full h-full flex flex-col text-left p-2">
+                <h4 className="text-lg font-semibold text-white mb-2">Prompt Safety Analysis</h4>
+                {isAuditing && (
+                  <div className="flex flex-col items-center justify-center gap-2 text-slate-400 h-full">
+                    <Loader className="animate-spin h-8 w-8" />
+                    <span>Auditing Prompt...</span>
+                  </div>
+                )}
+                {!isAuditing && auditResult && (
+                     <div className="flex flex-col gap-3 text-sm">
+                        <div>
+                            <span className="font-semibold text-slate-400">Risk Level: </span>
+                            <span className={cn("font-bold", getRiskColor(auditResult.riskLevel))}>{auditResult.riskLevel}</span>
+                        </div>
+                        <div>
+                             <span className="font-semibold text-slate-400">Assessment:</span>
+                             <p className="text-slate-300 bg-slate-900/50 rounded-md p-2 mt-1">{auditResult.assessment}</p>
+                        </div>
+                     </div>
+                )}
+                {!isAuditing && !auditResult && (
+                  <div className="text-slate-400">Click this tab to analyze the current prompt.</div>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="sitemap" className="flex-grow mt-0">
+              <div className="w-full h-full flex flex-col text-left p-2">
+                <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto flex items-center justify-center">
+                  {isScanningSitemap && (
+                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                      <Loader className="animate-spin h-8 w-8" />
+                      <span>Scanning Project...</span>
+                    </div>
+                  )}
+                  {!isScanningSitemap && sitemap && sitemap.length === 0 && <div>No pages found.</div>}
+                  {!isScanningSitemap && sitemap && sitemap.length > 0 && (
+                    <div className="w-full h-full overflow-y-auto">
+                      {sitemap.map((page, index) => (
+                        <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
+                          <div className="font-bold text-white flex items-center"><FileText size={14} className="mr-2" />{page.title}</div>
+                          <div className="text-cyan-400 text-xs my-1">{page.path}</div>
+                          <div className="text-slate-400">{page.description}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {!isScanningSitemap && !sitemap && (
+                    <div className="text-slate-400 text-center">Click this tab to scan the current page for navigable links.</div>
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -628,33 +660,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </div>
           </div>
       )},
-      { id: 'sitemap', icon: FileText, title: "Site Map", description: `Navigate site structure for '${projectName}'.`, iconClassName: "text-primary", children: (
-        <div className="w-full h-full flex flex-col text-left">
-          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto flex items-center justify-center">
-            {isScanningSitemap && (
-              <div className="flex flex-col items-center gap-2 text-slate-400">
-                <Loader className="animate-spin h-8 w-8" />
-                <span>Scanning Project...</span>
-              </div>
-            )}
-            {!isScanningSitemap && sitemap && sitemap.length === 0 && <div>No pages found.</div>}
-            {!isScanningSitemap && sitemap && sitemap.length > 0 && (
-              <div className="w-full h-full overflow-y-auto">
-                {sitemap.map((page, index) => (
-                  <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
-                    <div className="font-bold text-white flex items-center"><FileText size={14} className="mr-2" />{page.title}</div>
-                    <div className="text-cyan-400 text-xs my-1">{page.path}</div>
-                    <div className="text-slate-400">{page.description}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!isScanningSitemap && !sitemap && (
-              <div className="text-slate-400 text-center">Click this tab to scan the current page for navigable links.</div>
-            )}
-          </div>
-        </div>
-      ) },
+      { id: 'sitemap', icon: FileText, title: "Site Map", description: `Navigate site structure for '${projectName}'.`, iconClassName: "text-primary" },
       { id: 'time', icon: Clock, title: "Time Management", description: `Track time spent on the '${projectName}' project.`, iconClassName: "text-yellow-500", children: (
         <div className="w-full h-full flex flex-col items-center justify-center text-center">
           <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
@@ -688,8 +694,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
               issueCount={tab.id === 'devtools' ? issues.length : undefined}
               className={cn(
-                (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history' || tab.id === 'monitor') && activeTab === tab.id && "w-80 h-96",
-                (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history' && tab.id !== 'monitor') && activeTab === tab.id && "w-96 h-52",
+                (tab.id === 'devtools') && activeTab === tab.id && "w-96 h-[450px]",
+                (tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
+                (tab.id !== 'devtools' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
               )}
             />
           </TooltipTrigger>
