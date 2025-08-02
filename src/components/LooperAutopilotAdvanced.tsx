@@ -32,6 +32,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface TabProps {
   id: string;
@@ -546,39 +547,49 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       { id: 'actions', icon: Zap, title: "Actions", description: "Quick actions and shortcuts.", iconClassName: "text-yellow-500" },
     ],
     left: [
-      { id: 'console', icon: Terminal, title: "Console", description: "View system console output.", iconClassName: "text-slate-400", children: (
+       { id: 'devtools', icon: Terminal, title: "DevTools", description: "View console logs and captured issues.", iconClassName: "text-slate-400", children: (
         <div className="w-full h-full flex flex-col text-left">
-          <div className="flex gap-2 mb-2">
-            <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
-            <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Upload className="mr-1 h-3 w-3" /> Export</Button>
-          </div>
-          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
-            {consoleEntries.length === 0 && <div className="text-slate-500">Console is empty.</div>}
-            {consoleEntries.slice(0, 100).map((entry, index) => (
-              <div key={index} className="flex items-start gap-2 text-slate-400">
-                <span className="text-slate-500">[{new Date(entry.timestamp).toLocaleTimeString()}]</span>
-                <span className={cn('whitespace-pre-wrap break-all', entry.level === 'log' && 'text-slate-300', entry.level === 'api' && 'text-cyan-400', entry.level === 'error' && 'text-red-400', entry.level === 'warning' && 'text-yellow-400')}>[{entry.level}] {entry.message}</span>
+          <Tabs defaultValue="console" className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="console">Console</TabsTrigger>
+              <TabsTrigger value="issues">Issues</TabsTrigger>
+            </TabsList>
+            <TabsContent value="console" className="flex-grow">
+               <div className="w-full h-full flex flex-col text-left">
+                  <div className="flex gap-2 my-2">
+                    <Button size="sm" variant="ghost" onClick={clearConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Trash2 className="mr-1 h-3 w-3" /> Clear</Button>
+                    <Button size="sm" variant="ghost" onClick={exportConsole} className="text-xs text-slate-300 hover:bg-slate-700"><Upload className="mr-1 h-3 w-3" /> Export</Button>
+                  </div>
+                  <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+                    {consoleEntries.length === 0 && <div className="text-slate-500">Console is empty.</div>}
+                    {consoleEntries.slice(0, 100).map((entry, index) => (
+                      <div key={index} className="flex items-start gap-2 text-slate-400">
+                        <span className="text-slate-500">[{new Date(entry.timestamp).toLocaleTimeString()}]</span>
+                        <span className={cn('whitespace-pre-wrap break-all', entry.level === 'log' && 'text-slate-300', entry.level === 'api' && 'text-cyan-400', entry.level === 'error' && 'text-red-400', entry.level === 'warning' && 'text-yellow-400')}>[{entry.level}] {entry.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+            </TabsContent>
+            <TabsContent value="issues" className="flex-grow">
+              <div className="w-full h-full flex flex-col text-left">
+                <div className="flex gap-2 my-2">
+                  <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
+                </div>
+                <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+                  {issues.length === 0 && <div className="text-slate-500">Click "Capture Issues" to scan.</div>}
+                  {issues.map((issue, index) => (
+                      <div key={index} className={cn("flex items-start gap-2 p-1 rounded", issue.type === 'info' && 'bg-blue-900/30 text-blue-300', issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300', issue.type === 'error' && 'bg-red-900/30 text-red-300')}>
+                        <div className="font-bold uppercase">{issue.type}</div>
+                        <div>{issue.message}</div>
+                      </div>
+                    ))}
+                </div>
               </div>
-            ))}
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
       ) },
-      { id: 'issues', icon: AlertTriangle, title: "Issues", description: `DevTools-style issue detection for '${projectName}'.`, iconClassName: "text-destructive", children: (
-         <div className="w-full h-full flex flex-col text-left">
-           <div className="flex gap-2 mb-2">
-            <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
-           </div>
-           <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
-            {issues.length === 0 && <div className="text-slate-500">Click "Capture Issues" to scan.</div>}
-             {issues.map((issue, index) => (
-                <div key={index} className={cn("flex items-start gap-2 p-1 rounded", issue.type === 'info' && 'bg-blue-900/30 text-blue-300', issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300', issue.type === 'error' && 'bg-red-900/30 text-red-300')}>
-                  <div className="font-bold uppercase">{issue.type}</div>
-                  <div>{issue.message}</div>
-                </div>
-              ))}
-           </div>
-         </div>
-      )},
       { id: 'system', icon: Settings, title: "System Status", description: "View system information.", iconClassName: "text-slate-400" },
     ],
     right: [
@@ -648,8 +659,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     tabData.map(tab => 
       <Tab key={tab.id} {...tab} onClick={handleTabClick} onMouseEnter={playTabHoverBeep} isActive={activeTab === tab.id}
         className={cn(
-          (tab.id === 'console' || tab.id === 'issues' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'console' && tab.id !== 'issues' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
+          (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
         )}
       />
     );
@@ -705,7 +716,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
-
-    
 
     
