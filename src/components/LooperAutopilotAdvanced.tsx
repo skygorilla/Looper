@@ -216,6 +216,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
+        // Only save timeSpent. totalCount is managed locally after initial fetch.
         await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
       } catch (error) {
         console.error("Error updating time spent:", error);
@@ -296,14 +297,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
-      const newTotalCount = totalCount + 1;
-      setTotalCount(newTotalCount);
-  
-      if (projectName && user) {
-        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-        const docRef = doc(db, "projectStats", docId);
-        setDoc(docRef, { totalCount: newTotalCount }, { merge: true });
-      }
+      // Only update totalCount in local state. No Firestore write here.
+      setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -319,6 +314,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
+      saveTimeSpent(); // Save time when stopping
     }
   };
 
@@ -336,8 +332,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             setTimeSpent(data.timeSpent || 0);
             setTotalCount(data.totalCount || 0);
           } else {
+            // If the document doesn't exist, initialize locally and in Firestore
             setTimeSpent(0);
             setTotalCount(0);
+            await setDoc(docRef, { timeSpent: 0, totalCount: 0 });
           }
         } catch (error) {
           console.error("Error fetching project stats:", error);
@@ -696,3 +694,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
+
+    
