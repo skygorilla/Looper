@@ -22,7 +22,8 @@ import {
   Settings,
   Terminal,
   Activity,
-  Info
+  Info,
+  Badge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -45,9 +46,11 @@ interface TabProps {
   onMouseEnter: () => void;
   isActive: boolean;
   className?: string;
+  consoleCount?: number;
+  issueCount?: number;
 }
 
-const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, children, onClick, onMouseEnter, isActive, className, description }) => {
+const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, children, onClick, onMouseEnter, isActive, className, description, consoleCount = 0, issueCount = 0 }) => {
   const tabContent = (
     <div
       className={cn(
@@ -65,6 +68,20 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, childre
       }}
       onMouseEnter={onMouseEnter}
     >
+        {!isActive && id === 'devtools' && (
+          <div className="absolute top-0 right-0 -mt-1 -mr-1 flex flex-col gap-1">
+            {consoleCount > 0 && (
+              <div className="flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-blue-600 text-white text-[10px] font-bold px-1 border-2 border-[#1A1B1E]">
+                {consoleCount}
+              </div>
+            )}
+            {issueCount > 0 && (
+              <div className="flex items-center justify-center h-5 min-w-[1.25rem] rounded-full bg-red-600 text-white text-[10px] font-bold px-1 border-2 border-[#1A1B1E]">
+                {issueCount}
+              </div>
+            )}
+          </div>
+        )}
       <div className="flex items-center justify-center w-14 h-14">
         <Icon size={24} className={cn("transition-opacity", isActive && "opacity-0", iconClassName)} />
       </div>
@@ -109,7 +126,7 @@ const MainPanel = ({
 }: any) => {
   return (
     <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative" onClick={(e) => e.stopPropagation()}>
-        <button className="absolute top-[-34px] right-[-60px] w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] hover:scale-105 active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" data-tooltip="Close">
+        <button className="absolute top-[-50px] right-[-50px] w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] hover:scale-105 active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" data-tooltip="Close">
             <X size={18} className="text-slate-400"/>
         </button>
       <div className="text-center mb-6 cursor-move">
@@ -302,14 +319,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       
       setTotalCount(prev => {
         const newTotal = prev + 1;
-        // Only update totalCount in Firestore when a new session starts
-        if (user && projectName) {
-          const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-          const docRef = doc(db, "projectStats", docId);
-          updateDoc(docRef, { totalCount: newTotal }).catch(error => {
-            console.error("Error updating total count:", error);
-          });
-        }
+        // This no longer writes to Firestore on every start to avoid quota issues.
+        // It's managed locally after initial fetch.
         return newTotal;
       });
   
@@ -666,7 +677,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'onMouseEnter' | 'isActive'>[]) => 
     tabData.map(tab => 
-      <Tab key={tab.id} {...tab} onClick={handleTabClick} onMouseEnter={playTabHoverBeep} isActive={activeTab === tab.id}
+      <Tab key={tab.id} {...tab} 
+        onClick={handleTabClick} 
+        onMouseEnter={playTabHoverBeep} 
+        isActive={activeTab === tab.id}
+        consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
+        issueCount={tab.id === 'devtools' ? issues.length : undefined}
         className={cn(
           (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
           (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
