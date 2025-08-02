@@ -322,6 +322,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
+      // Only increment totalCount in local state.
       setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
@@ -687,8 +688,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
               issueCount={tab.id === 'devtools' ? issues.length : undefined}
               className={cn(
-                (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
-                (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
+                (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history' || tab.id === 'monitor') && activeTab === tab.id && "w-80 h-96",
+                (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history' && tab.id !== 'monitor') && activeTab === tab.id && "w-96 h-52",
               )}
             />
           </TooltipTrigger>
@@ -750,5 +751,3 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
-
-    
