@@ -32,6 +32,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
+import { extractUICommands } from '@/ai/flows/extract-ui-commands';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -235,17 +236,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        await updateDoc(docRef, { timeSpent: timeSpentRef.current });
+        await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
       } catch (error) {
-          // If the document doesn't exist, create it.
-          if ((error as any).code === 'not-found') {
-              await setDoc(docRef, { timeSpent: timeSpentRef.current, totalCount: totalCount }, { merge: true });
-          } else {
-              console.error("Error saving time spent:", error);
-          }
+          console.error("Error saving time spent:", error);
       }
     }
-  }, [user, projectName, totalCount]);
+  }, [user, projectName]);
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -320,16 +316,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
-      setTotalCount(prev => {
-        const newTotalCount = prev + 1;
-        if (user && projectName) {
-            const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-            const docRef = doc(db, "projectStats", docId);
-            setDoc(docRef, { totalCount: newTotalCount }, { merge: true })
-              .catch(e => console.error("Error updating total count", e));
-        }
-        return newTotalCount;
-      });
+      setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -413,7 +400,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   // Auto-start the timer once everything is loaded
   useEffect(() => {
     if (!isLoading && !isRunning && user && projectName) {
-      handleStart();
+      // This logic is now handled by the user pressing start
+      // handleStart();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, user, projectName]);
@@ -507,10 +495,18 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   };
 
-  const handleInjectPrompt = () => {
+  const handleInjectPrompt = async () => {
     addToHistory(starterPrompt);
     const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${starterPrompt.substring(0, 50)}...` };
     setConsoleEntries(prev => [newEntry, ...prev]);
+    try {
+      const result = await extractUICommands({ prompt: starterPrompt, targetTextareaId: 'starterPrompt' });
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'api', message: `Injection result: ${result.result}` }, ...prev]);
+    } catch (error) {
+      console.error("Error injecting prompt:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: `Injection failed: ${errorMessage}` }, ...prev]);
+    }
   };
 
   const clearConsole = () => setConsoleEntries([]);
@@ -752,3 +748,4 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
+
