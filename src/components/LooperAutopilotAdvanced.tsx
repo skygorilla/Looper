@@ -306,7 +306,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   
   const timeSpentRef = useRef(timeSpent);
   const isRunningRef = useRef(isRunning);
-  
+  const isPausedRef = useRef(isPaused);
+  const fullScanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
   const [isScanningSitemap, setIsScanningSitemap] = useState(false);
 
@@ -319,7 +321,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   
   useEffect(() => {
     isRunningRef.current = isRunning;
-  }, [isRunning]);
+    isPausedRef.current = isPaused;
+    // If user stops or pauses, clear the auto-rescan timeout
+    if (!isRunning || isPaused) {
+      if (fullScanTimeoutRef.current) {
+        clearTimeout(fullScanTimeoutRef.current);
+        fullScanTimeoutRef.current = null;
+      }
+    }
+  }, [isRunning, isPaused]);
 
   // Function to save time spent to Firestore
   const saveTimeSpent = useCallback(async () => {
@@ -328,12 +338,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
+        await setDoc(docRef, { timeSpent: timeSpentRef.current, totalCount }, { merge: true });
       } catch (error) {
           console.error("Error saving time spent:", error);
       }
     }
-  }, [user, projectName]);
+  }, [user, projectName, totalCount]);
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -407,7 +417,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     if (willBeRunning) {
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
-      
       setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
@@ -415,15 +424,34 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${starterPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
   
-      setTimeout(() => {
-        if(isRunningRef.current) {
-           setStatusText('Task Complete');
-           setIsThinking(false);
-        }
-      }, 3000);
+      // Special handling for full scan prompt
+      if (starterPrompt === fullScanPrompt) {
+        setStatusText('Auditing, waiting, scanning...');
+        fullScanTimeoutRef.current = setTimeout(() => {
+          // Check if still running and not paused before re-triggering
+          if (isRunningRef.current && !isPausedRef.current) {
+            setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
+            handleStart(); // Re-call to loop
+          }
+        // Use a 60-second delay as specified in the prompt's "Buffer" section
+        }, 60000); 
+      } else {
+        // Standard non-looping behavior
+        setTimeout(() => {
+          if (isRunningRef.current) {
+            setStatusText('Task Complete');
+            setIsThinking(false);
+          }
+        }, 3000);
+      }
     } else {
+      // This is the 'Stop' action
       setStatusText('Stopped');
       setIsThinking(false);
+      if (fullScanTimeoutRef.current) {
+        clearTimeout(fullScanTimeoutRef.current);
+        fullScanTimeoutRef.current = null;
+      }
       saveTimeSpent();
     }
   };
@@ -442,8 +470,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             setTimeSpent(data.timeSpent || 0);
             setTotalCount(data.totalCount || 0);
           } else {
+            // If no doc, initialize counts in Firestore
             setTimeSpent(0);
             setTotalCount(0);
+            await setDoc(docRef, { timeSpent: 0, totalCount: 0 });
           }
         } catch (error) {
           console.error("Error fetching project stats:", error);
@@ -454,26 +484,32 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         }
       }
     });
-
+  
     return () => {
       unsubscribe();
       if (isRunningRef.current) {
         saveTimeSpent();
       }
+      // Cleanup timeout on component unmount
+      if (fullScanTimeoutRef.current) {
+        clearTimeout(fullScanTimeoutRef.current);
+      }
     };
-  }, [projectName, saveTimeSpent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectName]);
 
 
   // Global error handler
   useEffect(() => {
-    const handleError = (message: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => {
-      const errorMessage = typeof message === 'string' ? message : (message as ErrorEvent).message;
-      const fullMessage = `Uncaught Error: ${errorMessage} at ${source}:${lineno}:${colno}`;
+    const handleError = (event: ErrorEvent) => {
+      const { message, filename, lineno, colno, error } = event;
+      const fullMessage = `Uncaught Error: ${message} at ${filename}:${lineno}:${colno}`;
       
       const newErrorEntry = {
         timestamp: Date.now(),
         level: 'error',
         message: fullMessage,
+        stack: error?.stack,
       };
       setConsoleEntries(prev => [newErrorEntry, ...prev]);
       
@@ -486,23 +522,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       return true;
     };
 
-    window.onerror = handleError;
+    window.addEventListener('error', handleError);
 
     return () => {
-      window.onerror = null;
+      window.removeEventListener('error', handleError);
     };
   }, []);
-
-
-  // Auto-start the timer once everything is loaded
-  useEffect(() => {
-    if (!isLoading && !isRunning && user && projectName) {
-      // This logic is now handled by the user pressing start
-      // handleStart();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, user, projectName]);
-
 
   // Timer logic
   useEffect(() => {
@@ -514,14 +539,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
     return () => clearInterval(interval);
   }, [isRunning, isPaused]);
-
-  // Save time on unmount
-  useEffect(() => {
-    return () => {
-      saveTimeSpent();
-    };
-  }, [saveTimeSpent]);
-
 
   // Save state to local storage on change
   useEffect(() => {
