@@ -128,10 +128,10 @@ const MainPanel = ({
       <div className="text-center mb-6 cursor-move">
         <div className="grid grid-cols-3 items-center h-6 mb-3">
             <div className="justify-self-end">
-                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-rotate-think"/>}
+                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-rotate-think" style={{ width: 'auto', height: 'auto' }}/>}
             </div>
             <div className={cn("text-white font-semibold transition-all justify-self-center", isRunning && "animate-glow")}>
-                 <Image id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_on.svg?updatedAt=1753374507503" : "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_off.svg?updatedAt=1753374521185"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
+                 <Image priority id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_on.svg?updatedAt=1753374507503" : "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_off.svg?updatedAt=1753374521185"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
             </div>
             <div className="justify-self-start">
               {!isThinking && <div className="w-6 h-6"></div>}
@@ -314,7 +314,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     if (willBeRunning) {
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
-      setTotalCount(prev => prev + 1); // Only update local state now
+      
+      if (!totalCount) { // Only update if not already set
+        setTotalCount(prev => prev + 1);
+      } else {
+        setTotalCount(prev => prev + 1);
+      }
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -330,6 +335,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
+      saveTimeSpent();
     }
   };
 
@@ -347,7 +353,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             setTimeSpent(data.timeSpent || 0);
             setTotalCount(data.totalCount || 0);
           } else {
-            // Set initial state locally, no need to write yet
             setTimeSpent(0);
             setTotalCount(0);
           }
@@ -387,13 +392,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   // Save time on unmount
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      saveTimeSpent();
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    // This is the cleanup function that runs when the component unmounts.
     return () => {
       saveTimeSpent();
-      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [saveTimeSpent]);
 
@@ -485,7 +486,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   
   // Auto capture issues periodically
   useEffect(() => {
-    captureIssues();
     const interval = setInterval(captureIssues, 10000); // every 10 seconds
     return () => clearInterval(interval);
   }, [captureIssues]);
@@ -730,5 +730,3 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
-
-
