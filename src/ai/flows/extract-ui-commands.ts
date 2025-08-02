@@ -40,7 +40,7 @@ const extractUICommandsPrompt = ai.definePrompt({
   output: {schema: ExtractUICommandsOutputSchema},
   prompt: `Extract all UI commands (buttons, tabs, links, forms) from the HTML of the current webpage. Inject the following prompt into the textarea with ID '{{{targetTextareaId}}}':
 
-  {{prompt}}
+  {{{prompt}}}
   `,
 });
 
