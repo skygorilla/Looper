@@ -216,12 +216,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        await setDoc(docRef, { timeSpent: timeSpentRef.current, totalCount }, { merge: true });
+        await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
       } catch (error) {
         console.error("Error updating time spent:", error);
       }
     }
-  }, [user, projectName, totalCount]);
+  }, [user, projectName]);
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -290,7 +290,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     if (isLoading) return;
     const willBeRunning = !isRunning;
     setIsRunning(willBeRunning);
-    if(isPaused) setIsPaused(false);
+    if (isPaused) setIsPaused(false);
   
     if (willBeRunning) {
       addToHistory(starterPrompt);
@@ -319,7 +319,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
-      // Removed saveTimeSpent from here to prevent excessive writes
     }
   };
 
