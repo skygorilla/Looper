@@ -237,9 +237,14 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
+        await updateDoc(docRef, { timeSpent: timeSpentRef.current });
       } catch (error) {
-        console.error("Error updating time spent:", error);
+        // If the doc doesn't exist, create it.
+        if ((error as any).code === 'not-found') {
+          await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
+        } else {
+          console.error("Error updating time spent:", error);
+        }
       }
     }
   }, [user, projectName]);
@@ -317,12 +322,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
-      setTotalCount(prev => {
-        const newTotal = prev + 1;
-        // This no longer writes to Firestore on every start to avoid quota issues.
-        // It's managed locally after initial fetch.
-        return newTotal;
-      });
+      setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -675,19 +675,28 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const TABS = getTabsConfig(projectName);
 
-  const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'onMouseEnter' | 'isActive'>[]) => 
+  const renderTabs = (tabData: Omit<TabProps, 'onClick' | 'onMouseEnter' | 'isActive' | 'consoleCount' | 'issueCount'>[]) => 
     tabData.map(tab => 
-      <Tab key={tab.id} {...tab} 
-        onClick={handleTabClick} 
-        onMouseEnter={playTabHoverBeep} 
-        isActive={activeTab === tab.id}
-        consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
-        issueCount={tab.id === 'devtools' ? issues.length : undefined}
-        className={cn(
-          (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
-        )}
-      />
+      <TooltipProvider key={tab.id}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Tab {...tab} 
+              onClick={handleTabClick} 
+              onMouseEnter={playTabHoverBeep} 
+              isActive={activeTab === tab.id}
+              consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
+              issueCount={tab.id === 'devtools' ? issues.length : undefined}
+              className={cn(
+                (tab.id === 'devtools' || tab.id === 'sitemap' || tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
+                (tab.id !== 'devtools' && tab.id !== 'sitemap' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
+              )}
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tab.title}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
 
   const handleOutsideClick = () => {
