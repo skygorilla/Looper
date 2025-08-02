@@ -320,22 +320,25 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const handleStart = () => {
     if (isLoading) return;
+    const currentPrompt = "scan app and do not change anithing";
+    setStarterPrompt(currentPrompt);
+
     const willBeRunning = !isRunning;
     setIsRunning(willBeRunning);
     if (isPaused) setIsPaused(false);
   
     if (willBeRunning) {
-      addToHistory(starterPrompt);
+      addToHistory(currentPrompt);
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
       setIsThinking(true);
-      const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${starterPrompt.substring(0, 50)}...` };
+      const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${currentPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
   
       // Special handling for full scan prompt
-      if (starterPrompt === fullScanPrompt) {
+      if (currentPrompt === fullScanPrompt) {
         setStatusText('Auditing, waiting, scanning...');
         fullScanTimeoutRef.current = setTimeout(() => {
           // Check if still running and not paused before re-triggering
@@ -405,7 +408,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectName, saveTimeSpent]);
+  }, [projectName]);
 
 
   // Global error handler
@@ -433,10 +436,17 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
     window.addEventListener('error', handleError);
 
+    const handleBeforeUnload = () => {
+      saveTimeSpent();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       window.removeEventListener('error', handleError);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [saveTimeSpent]);
 
   // Timer logic
   useEffect(() => {
@@ -593,7 +603,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const getTabsConfig = (projectName: string) => ({
     left: [
        { id: 'devtools', icon: Terminal, title: "DevTools", description: "View console logs and captured issues.", iconClassName: "text-slate-400", children: (
-        <div className="w-full h-full flex flex-col text-left">
+        <div className="w-full h-full flex flex-col text-left" onClick={(e) => e.stopPropagation()}>
           <Tabs defaultValue={activeDevToolsTab} onValueChange={handleDevToolsSubTabChange} className="w-full h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="console">Console</TabsTrigger>
@@ -620,7 +630,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </TabsContent>
             <TabsContent value="issues" className="flex-grow mt-0">
               <div className="w-full h-full flex flex-col text-left">
-                <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+                 <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
                   {issues.length === 0 && <div className="text-slate-500">Monitoring for issues in real-time...</div>}
                   {issues.map((issue, index) => (
                       <div key={index} className={cn("flex items-start gap-2 p-1 rounded", issue.type === 'info' && 'bg-blue-900/30 text-blue-300', issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300', issue.type === 'error' && 'bg-red-900/30 text-red-300')}>
