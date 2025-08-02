@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -69,7 +69,7 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, childre
         <Icon size={24} className={cn("transition-opacity", isActive && "opacity-0", iconClassName)} />
       </div>
       {isActive && (
-        <div className="absolute inset-0 opacity-100 transition-opacity duration-300 delay-200 p-6 flex flex-col items-center text-center">
+        <div className="absolute inset-0 opacity-100 transition-opacity duration-300 delay-200 p-6 flex flex-col items-center text-center" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
           <div className="text-slate-400 text-sm w-full h-full flex flex-col">{children || description}</div>
         </div>
@@ -300,8 +300,18 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
-      // Only update totalCount in local state.
-      setTotalCount(prev => prev + 1);
+      setTotalCount(prev => {
+        const newTotal = prev + 1;
+        // Only update totalCount in Firestore when a new session starts
+        if (user && projectName) {
+          const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+          const docRef = doc(db, "projectStats", docId);
+          updateDoc(docRef, { totalCount: newTotal }).catch(error => {
+            console.error("Error updating total count:", error);
+          });
+        }
+        return newTotal;
+      });
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -317,7 +327,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
-      saveTimeSpent(); // Save time when stopping
+      saveTimeSpent();
     }
   };
 
@@ -385,12 +395,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   // Save state to local storage on change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('looper-total-count', totalCount.toString());
       localStorage.setItem('starterPrompt', starterPrompt);
       localStorage.setItem('looper-console', JSON.stringify(consoleEntries));
       localStorage.setItem('looper-history', JSON.stringify(promptHistory));
     }
-  }, [totalCount, starterPrompt, consoleEntries, promptHistory]);
+  }, [starterPrompt, consoleEntries, promptHistory]);
 
   const handleAuditPrompt = useCallback(async () => {
     if (isAuditing) return;
