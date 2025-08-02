@@ -195,7 +195,7 @@ const MainPanel = ({
   )
 }
 
-const fullScanPrompt = `here zou can try test prompt to insert here where i inserted now to see how it performs we need to see a loop i will stop it on stop`;
+const fullScanPrompt = `scan ap`;
 
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -394,19 +394,18 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         }
       }
     });
-  
+
+    // Save on unmount
     return () => {
       unsubscribe();
-      if (isRunningRef.current) {
-        saveTimeSpent();
-      }
+      saveTimeSpent();
       // Cleanup timeout on component unmount
       if (fullScanTimeoutRef.current) {
         clearTimeout(fullScanTimeoutRef.current);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectName]);
+  }, [projectName, saveTimeSpent]);
 
 
   // Global error handler
