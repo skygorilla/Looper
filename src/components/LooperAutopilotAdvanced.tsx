@@ -195,13 +195,13 @@ const MainPanel = ({
   )
 }
 
-const fullScanPrompt = `scan ap`;
+const fullScanPrompt = `scan app and do not change anithing`;
 
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [activeDevToolsTab, setActiveDevToolsTab] = useState('console');
   const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(isPaused);
   const [sessionCount, setSessionCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [consoleEntries, setConsoleEntries] = useState<any[]>([]);
@@ -320,6 +320,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const handleStart = () => {
     if (isLoading) return;
+    
+    // Always use this prompt when starting
     const currentPrompt = "scan app and do not change anithing";
     setStarterPrompt(currentPrompt);
 
@@ -440,7 +442,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       saveTimeSpent();
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('error', handleError);
@@ -789,3 +790,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
+
+    
