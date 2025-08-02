@@ -58,7 +58,10 @@ const Tab: React.FC<TabProps> = ({ id, icon: Icon, iconClassName, title, childre
         isActive ? "z-20 rounded-2xl bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-lg overflow-hidden" : "z-10",
         className
       )}
-      onClick={() => onClick(id)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(id);
+      }}
       onMouseEnter={onMouseEnter}
     >
       <div className="flex items-center justify-center w-14 h-14">
@@ -104,7 +107,7 @@ const MainPanel = ({
   isLoading
 }: any) => {
   return (
-    <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative">
+    <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative" onClick={(e) => e.stopPropagation()}>
         <button className="absolute top-[-34px] right-[-60px] w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] hover:scale-105 active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" data-tooltip="Close">
             <X size={18} className="text-slate-400"/>
         </button>
@@ -171,7 +174,7 @@ const MainPanel = ({
       </div>
 
       <div className="text-center text-xs text-slate-500 mt-auto">
-        Looper Autopilot v1.3.0 - Smart Edition
+        Looper Autopilot v2
       </div>
     </div>
   )
@@ -216,7 +219,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        // Only save timeSpent. totalCount is managed locally after initial fetch.
         await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
       } catch (error) {
         console.error("Error updating time spent:", error);
@@ -297,7 +299,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
-      // Only update totalCount in local state. No Firestore write here.
+      // Only update totalCount in local state.
       setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
@@ -652,8 +654,17 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       />
     );
 
+  const handleOutsideClick = () => {
+    if (activeTab) {
+      setActiveTab(null);
+    }
+  };
+
   return (
-      <div className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}>
+      <div 
+        className={cn("relative grid grid-cols-[auto_auto_auto] grid-rows-[auto_auto_auto] gap-5 items-center justify-items-center p-5 transform scale-90", className)}
+        onClick={handleOutsideClick}
+      >
           {/* Top */}
           <div className="col-start-2 row-start-1 flex flex-row gap-5">
             {renderTabs(TABS.top)}
@@ -694,5 +705,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
+
+    
 
     
