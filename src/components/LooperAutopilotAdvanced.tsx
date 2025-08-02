@@ -330,7 +330,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } else {
       setStatusText('Stopped');
       setIsThinking(false);
-      saveTimeSpent();
     }
   };
 
@@ -348,7 +347,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             setTimeSpent(data.timeSpent || 0);
             setTotalCount(data.totalCount || 0);
           } else {
-            await setDoc(docRef, { timeSpent: 0, totalCount: 0 }, { merge: true });
+            // Set initial state locally, no need to write yet
             setTimeSpent(0);
             setTotalCount(0);
           }
@@ -388,10 +387,13 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   // Save time on unmount
   useEffect(() => {
-    window.addEventListener('beforeunload', saveTimeSpent);
+    const handleBeforeUnload = () => {
+      saveTimeSpent();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       saveTimeSpent();
-      window.removeEventListener('beforeunload', saveTimeSpent);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [saveTimeSpent]);
 
@@ -470,7 +472,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     setConsoleEntries(prev => [newEntry, ...prev]);
   };
 
-  const captureIssues = () => {
+  const captureIssues = useCallback(() => {
     const exampleIssues = [
         { type: 'error', message: '404 Not Found for resource: /api/user-data' },
         { type: 'warning', message: 'Image at /assets/logo.png is not optimized' },
@@ -479,7 +481,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     ];
     setIssues(exampleIssues);
     setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: `Captured ${exampleIssues.length} issues.` }, ...prev]);
-  };
+  }, []);
+  
+  // Auto capture issues periodically
+  useEffect(() => {
+    captureIssues();
+    const interval = setInterval(captureIssues, 10000); // every 10 seconds
+    return () => clearInterval(interval);
+  }, [captureIssues]);
+
   
   const clearConsole = () => setConsoleEntries([]);
 
@@ -562,11 +572,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </TabsContent>
             <TabsContent value="issues" className="flex-grow mt-0">
               <div className="w-full h-full flex flex-col text-left">
-                <div className="flex gap-2 my-2">
-                  <Button size="sm" variant="ghost" onClick={captureIssues} className="text-xs text-slate-300 hover:bg-slate-700">Capture Issues</Button>
-                </div>
                 <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
-                  {issues.length === 0 && <div className="text-slate-500">Click "Capture Issues" to scan.</div>}
+                  {issues.length === 0 && <div className="text-slate-500">Monitoring for issues in real-time...</div>}
                   {issues.map((issue, index) => (
                       <div key={index} className={cn("flex items-start gap-2 p-1 rounded", issue.type === 'info' && 'bg-blue-900/30 text-blue-300', issue.type === 'warning' && 'bg-yellow-900/30 text-yellow-300', issue.type === 'error' && 'bg-red-900/30 text-red-300')}>
                         <div className="font-bold uppercase">{issue.type}</div>
@@ -723,4 +730,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       </div>
   );
 };
+
 
