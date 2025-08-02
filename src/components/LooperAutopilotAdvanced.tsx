@@ -235,12 +235,17 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
-        await setDoc(docRef, { timeSpent: timeSpentRef.current }, { merge: true });
+        await updateDoc(docRef, { timeSpent: timeSpentRef.current });
       } catch (error) {
-          console.error("Error saving time spent:", error);
+          // If the document doesn't exist, create it.
+          if ((error as any).code === 'not-found') {
+              await setDoc(docRef, { timeSpent: timeSpentRef.current, totalCount: totalCount }, { merge: true });
+          } else {
+              console.error("Error saving time spent:", error);
+          }
       }
     }
-  }, [user, projectName]);
+  }, [user, projectName, totalCount]);
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -315,11 +320,16 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       addToHistory(starterPrompt);
       setSessionCount(prev => prev + 1);
       
-      if (!totalCount) { // Only update if not already set
-        setTotalCount(prev => prev + 1);
-      } else {
-        setTotalCount(prev => prev + 1);
-      }
+      setTotalCount(prev => {
+        const newTotalCount = prev + 1;
+        if (user && projectName) {
+            const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+            const docRef = doc(db, "projectStats", docId);
+            setDoc(docRef, { totalCount: newTotalCount }, { merge: true })
+              .catch(e => console.error("Error updating total count", e));
+        }
+        return newTotalCount;
+      });
   
       setStatusText('Processing...');
       setIsThinking(true);
@@ -368,6 +378,36 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
     return () => unsubscribe();
   }, [projectName]);
+
+
+  // Global error handler
+  useEffect(() => {
+    const handleError = (message: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => {
+      const errorMessage = typeof message === 'string' ? message : (message as ErrorEvent).message;
+      const fullMessage = `Uncaught Error: ${errorMessage} at ${source}:${lineno}:${colno}`;
+      
+      const newErrorEntry = {
+        timestamp: Date.now(),
+        level: 'error',
+        message: fullMessage,
+      };
+      setConsoleEntries(prev => [newErrorEntry, ...prev]);
+      
+      const newIssueEntry = {
+        type: 'error',
+        message: fullMessage,
+      };
+      setIssues(prev => [newIssueEntry, ...prev]);
+
+      return true;
+    };
+
+    window.onerror = handleError;
+
+    return () => {
+      window.onerror = null;
+    };
+  }, []);
 
 
   // Auto-start the timer once everything is loaded
@@ -473,24 +513,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     setConsoleEntries(prev => [newEntry, ...prev]);
   };
 
-  const captureIssues = useCallback(() => {
-    const exampleIssues = [
-        { type: 'error', message: '404 Not Found for resource: /api/user-data' },
-        { type: 'warning', message: 'Image at /assets/logo.png is not optimized' },
-        { type: 'info', message: 'No <title> tag found on the page' },
-        { type: 'error', message: 'Uncaught TypeError: Cannot read properties of undefined' }
-    ];
-    setIssues(exampleIssues);
-    setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: `Captured ${exampleIssues.length} issues.` }, ...prev]);
-  }, []);
-  
-  // Auto capture issues periodically
-  useEffect(() => {
-    const interval = setInterval(captureIssues, 10000); // every 10 seconds
-    return () => clearInterval(interval);
-  }, [captureIssues]);
-
-  
   const clearConsole = () => setConsoleEntries([]);
 
   const exportConsole = () => {
