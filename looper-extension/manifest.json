@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Looper Autopilot",
-  "version": "1.0",
-  "description": "UI automation toolkit with circular control panel",
+  "name": "Looper v2",
+  "version": "2.0",
+  "description": "Advanced UI automation toolkit with tabbed panel interface",
   "permissions": [
     "activeTab",
     "storage",
