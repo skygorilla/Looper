@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Looper v2",
+  "name": "Looper",
   "version": "2.0",
   "description": "Advanced UI automation toolkit with tabbed panel interface",
   "permissions": [
