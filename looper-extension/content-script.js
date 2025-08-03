@@ -1,18 +1,8 @@
-// This script is responsible for creating the root element
-// into which the React application will be rendered.
-
+// Content script for Looper extension - minimal
 (function() {
   'use strict';
-
-  // Check if the root element already exists
-  if (document.getElementById('looper-extension-root')) {
-    return;
-  }
-
-  // Create the root element for the React app
-  const root = document.createElement('div');
-  root.id = 'looper-extension-root';
-  document.body.appendChild(root);
-  console.log("Looper extension root created.");
-
+  
+  // This content script is minimal - all injection is handled by popup.js
+  console.log('Looper extension content script loaded');
+  
 })();
