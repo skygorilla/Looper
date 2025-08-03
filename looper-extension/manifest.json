@@ -1,12 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Looper",
-  "version": "2.0",
-  "description": "Advanced UI automation toolkit with tabbed panel interface",
+  "version": "1.0",
+  "description": "A browser extension to automate UI tasks.",
   "permissions": [
     "activeTab",
     "storage",
     "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -17,14 +20,17 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content-script.js"],
-      "css": ["content-styles.css"]
-    }
-  ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }
