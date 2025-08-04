@@ -508,7 +508,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     const willBeRunning = !isRunning;
 
     if (willBeRunning) {
-      // Use the prompt from the text area.
       const currentPrompt = starterPrompt;
       if (!currentPrompt.trim()) {
         setStatusText("Prompt is empty");
@@ -530,7 +529,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${finalPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
 
-      // Handle the full scan case for auto-restarting.
       if (currentPrompt === fullScanPrompt) {
         setStatusText('Auditing, waiting, scanning...');
         fullScanTimeoutRef.current = setTimeout(() => {
@@ -541,7 +539,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         }, 60000); 
       }
     } else {
-      // This is the 'Stop' action
       setIsRunning(false);
       setStatusText('Stopped');
       setIsThinking(false);
@@ -549,7 +546,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         clearTimeout(fullScanTimeoutRef.current);
         fullScanTimeoutRef.current = null;
       }
-      saveProjectStats(); // Save on stop
+      saveProjectStats();
     }
   };
 
@@ -671,7 +668,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         if(willBePaused) {
           setStatusText('Paused');
           setIsThinking(false);
-          saveProjectStats(); // Save on pause
+          saveProjectStats();
         } else {
           setStatusText('Processing...');
           if(isRunning) setIsThinking(true);
@@ -695,13 +692,27 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     addToHistory(finalPrompt);
     const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${finalPrompt.substring(0, 50)}...` };
     setConsoleEntries(prev => [newEntry, ...prev]);
+    setIsThinking(true);
+    setStatusText('Thinking...');
+
     try {
-      const result = await extractUICommands({ prompt: finalPrompt, targetTextareaId: 'starterPrompt' });
-      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'api', message: `Injection result: ${result.result}` }, ...prev]);
+      // Simulate API call and AI thinking time
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // The AI responds by updating the prompt
+      const aiResponse = `APPROVAL_REQUEST: I have analyzed the page. I suggest refactoring the main content into a new component called 'ContentWrapper'. Please confirm to proceed.`;
+      setStarterPrompt(aiResponse);
+
+      const responseEntry = { timestamp: Date.now(), level: 'api', message: `Agent responded. Waiting for user confirmation.` };
+      setConsoleEntries(prev => [responseEntry, ...prev]);
+      
     } catch (error) {
-      console.error("Error injecting prompt:", error);
+      console.error("Error during agent response simulation:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: `Injection failed: ${errorMessage}` }, ...prev]);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: `Agent failed to respond: ${errorMessage}` }, ...prev]);
+    } finally {
+      setIsThinking(false);
+      setStatusText('Awaiting Approval');
     }
   };
 
@@ -1046,6 +1057,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
 
