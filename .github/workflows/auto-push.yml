@@ -1,0 +1,29 @@
+name: Auto Push on Changes
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  auto-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
+    - name: Configure Git
+      run: |
+        git config --global user.name "Auto Push Bot"
+        git config --global user.email "bot@looper.dev"
+        
+    - name: Check for changes and push
+      run: |
+        if [[ `git status --porcelain` ]]; then
+          git add .
+          git commit -m "Auto push: $(date)"
+          git push
+        else
+          echo "No changes to push"
+        fi
