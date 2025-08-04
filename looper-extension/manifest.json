@@ -12,7 +12,7 @@
     "<all_urls>"
   ],
   "action": {
-    "default_title": "Looper"
+    "default_title": "Activate Looper"
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -22,10 +22,12 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [],
   "web_accessible_resources": [
     {
       "resources": [
-        "assets/*"
+        "dist/main.js",
+        "dist/main.css"
       ],
       "matches": [
         "<all_urls>"
