@@ -911,9 +911,13 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   return (
       <div 
-        className={cn("relative grid grid-cols-[auto_1fr_auto] grid-rows-1 gap-5 items-center justify-items-center p-5 transform scale-90", className)}
+        className={cn("relative transform scale-90", className)}
         onClick={handleOutsideClick}
       >
+        <div
+          className="grid grid-cols-[auto_1fr_auto] grid-rows-1 gap-5 items-center justify-items-center p-5"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Left */}
           <div className="col-start-1 flex flex-col gap-5 justify-self-end">
             {renderTabs(TABS.left)}
@@ -943,6 +947,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           <div className="col-start-3 flex flex-col gap-5 justify-self-start">
             {renderTabs(TABS.right)}
           </div>
+        </div>
       </div>
   );
 };
