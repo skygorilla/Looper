@@ -98,7 +98,7 @@
 
           <!-- Header -->
           <div style="text-align: center; margin-bottom: 24px;">
-            <div style="color: white; font-weight: 600; margin-bottom: 12px;">🤖 Looper AI</div>
+            <div style="color: white; font-weight: 600; margin-bottom: 12px;">🤖 Looper Gemini</div>
             <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af;">Ready to Chat</div>
           </div>
 
@@ -181,7 +181,7 @@
             resize: none;
             margin-bottom: 20px;
             outline: none;
-          " placeholder="🤖 Ask Looper AI anything about UI automation..."></textarea>
+          " placeholder="🤖 Ask Looper Gemini anything about UI automation..."></textarea>
 
           <!-- Chat Button -->
           <button onclick="chatWithLooper()" style="
@@ -291,13 +291,7 @@
     }
   };
   
-  // Get API key from chrome storage or use environment
-  let apiKey = null;
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get(['openai-api-key'], function(result) {
-      apiKey = result['openai-api-key'];
-    });
-  }
+  // Using built-in Gemini API
   
   window.chatWithLooper = async function() {
     const textarea = document.getElementById('starterPrompt');
@@ -305,14 +299,7 @@
     
     const userMessage = textarea.value.trim();
     
-    // Check for API key
-    if (!apiKey) {
-      textarea.value = '🤖 Looper: Please set your OpenAI API key first. Go to chrome://extensions and configure Looper.';
-      setTimeout(() => {
-        textarea.value = '';
-      }, 4000);
-      return;
-    }
+    // Gemini API is built-in, no key needed
     
     // Show thinking state
     textarea.value = '🤖 Looper is thinking...';
@@ -324,24 +311,22 @@
     updateCounters();
     
     try {
-      // Real OpenAI API call
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Real Gemini API call
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCwM-woaN63Xc3EQ4STNLHFgR1DqPTsEtA`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{
-            role: 'system',
-            content: 'You are Looper, a UI automation assistant. Help users with web automation, element selection, CSS selectors, XPath, and testing. Be concise and practical. Current page: ' + window.location.href
-          }, {
-            role: 'user',
-            content: userMessage
+          contents: [{
+            parts: [{
+              text: `You are Looper, a UI automation assistant. Help users with web automation, element selection, CSS selectors, XPath, and testing. Be concise and practical. Current page: ${window.location.href}\n\nUser: ${userMessage}`
+            }]
           }],
-          max_tokens: 200,
-          temperature: 0.7
+          generationConfig: {
+            maxOutputTokens: 200,
+            temperature: 0.7
+          }
         })
       });
       
@@ -350,7 +335,7 @@
       }
       
       const data = await response.json();
-      const aiResponse = data.choices?.[0]?.message?.content || 'Sorry, I could not process that request.';
+      const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not process that request.';
       
       // Show AI response
       textarea.value = `🤖 Looper: ${aiResponse}`;
