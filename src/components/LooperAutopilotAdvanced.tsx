@@ -504,12 +504,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const handleStart = () => {
     if (isLoading) return;
-
     const willBeRunning = !isRunning;
-
+  
     if (willBeRunning) {
-      const currentPrompt = starterPrompt;
-      if (!currentPrompt.trim()) {
+      if (!starterPrompt.trim()) {
         setStatusText("Prompt is empty");
         const newEntry = { timestamp: Date.now(), level: 'warning', message: `Cannot start with an empty prompt.` };
         setConsoleEntries(prev => [newEntry, ...prev]);
@@ -518,23 +516,23 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       
       if (isPaused) setIsPaused(false);
       setIsRunning(true);
-
+  
       const finalPrompt = getFinalPrompt();
       addToHistory(finalPrompt);
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
-
+  
       setStatusText('Processing...');
       setIsThinking(true);
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${finalPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
-
-      if (currentPrompt === fullScanPrompt) {
+  
+      if (starterPrompt === fullScanPrompt) {
         setStatusText('Auditing, waiting, scanning...');
         fullScanTimeoutRef.current = setTimeout(() => {
           if (isRunningRef.current && !isPausedRef.current) {
             setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
-            handleStart();
+            handleStart(); // Recursive call to re-initiate
           }
         }, 60000); 
       }
@@ -1057,6 +1055,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
 
