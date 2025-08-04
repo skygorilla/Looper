@@ -35,6 +35,7 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate-sitemap';
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 import { extractUICommands } from '@/ai/flows/extract-ui-commands';
+import { extractChatHistory, type ExtractChatHistoryOutput } from '@/ai/flows/extract-chat-history';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from './ui/switch';
@@ -348,6 +349,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [auditResult, setAuditResult] = useState<AuditUICommandsOutput | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
   
+  const [chatHistory, setChatHistory] = useState<ExtractChatHistoryOutput['chatHistory'] | null>(null);
+  const [isScanningChat, setIsScanningChat] = useState(false);
+
   useEffect(() => {
     timeSpentRef.current = timeSpent;
   }, [timeSpent]);
@@ -731,6 +735,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   }, [isScanningSitemap]);
   
+  const handleScanChatHistory = useCallback(async () => {
+    if (typeof window === 'undefined' || isScanningChat) return;
+    setIsScanningChat(true);
+    setChatHistory(null);
+    try {
+      const bodyHtml = document.body.outerHTML;
+      const result = await extractChatHistory({ html: bodyHtml });
+      setChatHistory(result.chatHistory);
+    } catch (error) {
+      console.error("Error scanning chat history:", error);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to scan chat history.' }, ...prev]);
+    } finally {
+      setIsScanningChat(false);
+    }
+  }, [isScanningChat]);
 
   const formatTime = (totalSeconds: number) => {
     const days = Math.floor(totalSeconds / (3600 * 24));
@@ -851,6 +870,31 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </Tabs>
         </div>
       ) },
+      { id: 'chat-history', icon: MessageSquare, title: "Scan Chat", description: `Scans the prototyper chat history.`, iconClassName: "text-green-400", children: (
+        <div className="w-full h-full flex flex-col text-left p-2">
+          <div className="flex-grow bg-slate-900/50 rounded-md p-2 text-xs font-mono overflow-y-auto">
+            {isScanningChat && (
+              <div className="flex flex-col items-center justify-center gap-2 text-slate-400 h-full">
+                <Loader className="animate-spin h-8 w-8" />
+                <span>Scanning Chat...</span>
+              </div>
+            )}
+            {!isScanningChat && chatHistory && chatHistory.length > 0 && (
+               <div className="w-full h-full overflow-y-auto">
+                {chatHistory.map((entry, index) => (
+                  <div key={index} className="mb-2 p-2 rounded bg-slate-800/50">
+                    <div className={cn("font-bold", entry.author === 'user' ? 'text-blue-400' : 'text-purple-400')}>{entry.author}</div>
+                    <div className="text-slate-300 whitespace-pre-wrap">{entry.message}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+             {!isScanningChat && (!chatHistory || chatHistory.length === 0) && (
+              <div className="text-slate-400 text-center">Click this tab to scan the current chat history.</div>
+            )}
+          </div>
+        </div>
+      )},
     ],
     right: [
       { id: 'full-scan', icon: Bot, title: "Full Scan", description: `Injects a full application scan prompt.`, iconClassName: "text-primary" },
@@ -923,9 +967,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         consoleCount={tab.id === 'devtools' ? consoleEntries.length : undefined}
         issueCount={tab.id === 'devtools' ? issues.length : undefined}
         className={cn(
-          (tab.id === 'devtools') && activeTab === tab.id && "w-96 h-[450px]",
+          (tab.id === 'devtools' || tab.id === 'chat-history') && activeTab === tab.id && "w-96 h-[450px]",
           (tab.id === 'history' || tab.id === 'settings' || tab.id === 'feedback') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'devtools' && tab.id !== 'history' && tab.id !== 'settings' && tab.id !== 'feedback') && activeTab === tab.id && "w-96 h-52",
+          (tab.id !== 'devtools' && tab.id !== 'history' && tab.id !== 'settings' && tab.id !== 'feedback' && tab.id !== 'chat-history') && activeTab === tab.id && "w-96 h-52",
         )}
       />
     );
@@ -935,6 +979,13 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       setActiveTab(null);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'sitemap') handleGenerateSitemap();
+    if (activeTab === 'audit') handleAuditPrompt();
+    if (activeTab === 'chat-history') handleScanChatHistory();
+  }, [activeTab, handleGenerateSitemap, handleAuditPrompt, handleScanChatHistory]);
+
 
   return (
       <div 
@@ -986,4 +1037,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
