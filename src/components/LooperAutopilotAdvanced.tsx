@@ -36,6 +36,7 @@ import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 import { extractUICommands } from '@/ai/flows/extract-ui-commands';
 import { extractChatHistory, type ExtractChatHistoryOutput } from '@/ai/flows/extract-chat-history';
+import { suggestUIImprovement } from '@/ai/flows/suggest-ui-improvement';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from './ui/switch';
@@ -557,12 +558,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
     return () => {
       window.removeEventListener('error', handleError);
-      if (isRunning) {
-        saveProjectStats();
-      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saveProjectStats, isRunning]);
+  }, []);
 
   // Timer logic
   useEffect(() => {
@@ -655,21 +652,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   };
 
   const handleInjectPrompt = async () => {
+    if (typeof window === 'undefined') return;
+  
     const finalPrompt = getFinalPrompt();
     addToHistory(finalPrompt);
     const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${finalPrompt.substring(0, 50)}...` };
     setConsoleEntries(prev => [newEntry, ...prev]);
     setIsThinking(true);
     setStatusText('Thinking...');
-
+  
     try {
-      // Simulate API call and AI thinking time
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const bodyHtml = document.body.outerHTML;
+      const result = await suggestUIImprovement({ html: bodyHtml, prompt: finalPrompt });
       
-      // The AI responds by updating the prompt
-      const aiResponse = `APPROVAL_REQUEST: I have analyzed the page. I suggest refactoring the main content into a new component called 'ContentWrapper'. Please confirm to proceed.`;
-      setStarterPrompt(aiResponse);
-
+      setStarterPrompt(result.suggestion);
+  
       const responseEntry = { timestamp: Date.now(), level: 'api', message: `Agent responded. Waiting for user confirmation.` };
       setConsoleEntries(prev => [responseEntry, ...prev]);
       
@@ -1024,6 +1021,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
 
