@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Represents the Prototyper providing the chat history to the Looper agent.
+ * @fileOverview Extracts the chat history from the page HTML to make the agent aware of the conversation.
  *
- * - extractChatHistory - A function that simulates the Prototyper providing the conversation history.
+ * - extractChatHistory - A function that analyzes the page's HTML to extract the conversation.
  * - ExtractChatHistoryInput - The input type for the extractChatHistory function.
  * - ExtractChatHistoryOutput - The return type for the extractChatHistory function.
  */
@@ -12,11 +12,9 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ExtractChatHistoryInputSchema = z.object({
-  // The HTML is no longer strictly needed but is kept for schema consistency.
-  // It represents the context Looper is currently looking at.
   html: z
     .string()
-    .describe('The HTML content of the webpage to analyze.'),
+    .describe('The HTML content of the webpage to analyze for chat history.'),
 });
 export type ExtractChatHistoryInput = z.infer<typeof ExtractChatHistoryInputSchema>;
 
@@ -38,21 +36,21 @@ const prompt = ai.definePrompt({
   name: 'extractChatHistoryPrompt',
   input: {schema: ExtractChatHistoryInputSchema},
   output: {schema: ExtractChatHistoryOutputSchema},
-  prompt: `You are the Prototyper, the AI developer assistant. The Looper agent, which is blind to the source code, has requested the recent chat history to get context on the project.
+  prompt: `You are an expert at analyzing webpage HTML to extract conversation histories.
+Analyze the provided HTML content and extract the chat messages between the 'user' and the 'prototyper'.
 
-Provide a structured summary of the recent conversation with the user (operator).
+Look for elements with class names like '_chatMessages_...', '_chatMessage_...', and '_isUser_...'.
+- Identify messages from the user (containing '_isUser_...') and from the prototyper.
+- Extract the text content of each message.
+- Construct a structured history of the conversation.
 
-Here is the recent history to summarize:
-- User asked to add a safety switch.
-- Prototyper added a "Settings" tab with a toggle switch.
-- User noted that clicking empty space didn't close the tab.
-- Prototyper attempted a fix, but the user rolled it back.
-- User clarified the high-level goal: Looper should be an autonomous agent that can take over development.
-- User asked if Looper can read the Prototyper's feedback.
-- Prototyper implemented a "Scan Chat" feature and a "Feedback" tab.
-- User clarified the interaction model: User (Operator) -> Looper (Agent) -> Prototyper (Developer). Looper is blind and must ask the Prototyper for information.
+Based on your analysis of the HTML below, generate the structured chat history output.
 
-Based on this, generate the structured chat history output.`,
+HTML Content:
+\`\`\`html
+{{{html}}}
+\`\`\`
+`,
 });
 
 const extractChatHistoryFlow = ai.defineFlow(
