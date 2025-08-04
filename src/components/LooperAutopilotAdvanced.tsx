@@ -36,7 +36,7 @@ import { generateSitemap, type GenerateSitemapOutput } from '@/ai/flows/generate
 import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui-commands';
 import { extractUICommands } from '@/ai/flows/extract-ui-commands';
 import { extractChatHistory, type ExtractChatHistoryOutput } from '@/ai/flows/extract-chat-history';
-import { suggestUIImprovement } from '@/ai/flows/suggest-ui-improvement';
+import { suggestUIImprovement, type SuggestUIImprovementOutput } from '@/ai/flows/suggest-ui-improvement';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from './ui/switch';
@@ -546,7 +546,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         }
       }
 
-      const finalPrompt = getFinalPrompt();
       if (!starterPrompt.trim() || starterPrompt === defaultPrompt) {
         setStatusText("Prompt is empty");
         setPromptError("Prompt cannot be empty. Please enter a command.");
@@ -559,6 +558,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       if (isPaused) setIsPaused(false);
       setIsRunning(true);
   
+      const finalPrompt = getFinalPrompt();
       addToHistory(finalPrompt);
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
@@ -638,19 +638,26 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   }, [starterPrompt, consoleEntries, promptHistory, isSafetyOn]);
   
-    // This is the core autonomous loop
-    useEffect(() => {
-        const autonomousLoop = async () => {
-            if (isRunningRef.current && !isPausedRef.current) {
-                await handleInjectPrompt();
-            }
-        };
+  // This is the core autonomous loop
+  useEffect(() => {
+    const autonomousLoop = async () => {
+      if (isRunningRef.current && !isPausedRef.current) {
+        // The agent acts on its current prompt
+        const suggestion = await handleInjectPrompt();
 
-        const timeoutId = setTimeout(autonomousLoop, 3000); // Wait 3 seconds before next action
+        // The agent's output (suggestion) becomes its next input.
+        if (suggestion) {
+           setTimeout(() => {
+                setStarterPrompt(suggestion);
+           }, 3000); // Wait 3 seconds before next action
+        }
+      }
+    };
 
-        return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [starterPrompt, isRunning, isPaused]); // Rerun when the prompt changes while running
+    autonomousLoop();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starterPrompt]);
 
 
   const handleAuditPrompt = useCallback(async () => {
@@ -722,7 +729,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   };
 
-  const handleInjectPrompt = async () => {
+  const handleInjectPrompt = async (): Promise<string | undefined> => {
     if (typeof window === 'undefined') return;
   
     const finalPrompt = getFinalPrompt();
@@ -736,18 +743,18 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       const bodyHtml = document.body.outerHTML;
       const result = await suggestUIImprovement({ html: bodyHtml, prompt: finalPrompt });
       
-      setStarterPrompt(result.suggestion);
-  
-      const responseEntry = { timestamp: Date.now(), level: 'api', message: `Agent responded. Waiting for user confirmation.` };
+      const responseEntry = { timestamp: Date.now(), level: 'api', message: `Agent responded. New prompt generated.` };
       setConsoleEntries(prev => [responseEntry, ...prev]);
+      return result.suggestion;
       
     } catch (error) {
       console.error("Error during agent response simulation:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: `Agent failed to respond: ${errorMessage}` }, ...prev]);
+      setStatusText('Error');
     } finally {
       setIsThinking(false);
-      setStatusText('Awaiting Approval');
+      // We don't set status to Awaiting Approval anymore, loop handles it.
     }
   };
 
@@ -1091,5 +1098,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
