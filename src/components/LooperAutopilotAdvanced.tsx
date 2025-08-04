@@ -129,6 +129,7 @@ const MainPanel = ({
   isLoading,
   isSafetyOn,
   safetyPrefix,
+  promptError,
 }: any) => {
 
   const displayedPrompt = isSafetyOn ? `${safetyPrefix}${starterPrompt}` : starterPrompt;
@@ -194,14 +195,18 @@ const MainPanel = ({
         </div>
       </div>
       
-      <textarea 
-        id="starterPrompt"
-        className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16,18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-primary"
-        value={displayedPrompt}
-        onChange={handlePromptChange}
-        placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
-        spellCheck={false}
-      />
+      <div className="w-full flex-grow flex flex-col mb-5">
+        <textarea 
+          id="starterPrompt"
+          className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16,18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+          value={displayedPrompt}
+          onChange={handlePromptChange}
+          placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
+          spellCheck={false}
+        />
+        {promptError && <p className="text-xs text-destructive mt-1.5 ml-2">{promptError}</p>}
+      </div>
+
 
       <div className="flex gap-2.5">
         <Button onClick={handleInjectPrompt} className="flex-1 h-14 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" disabled={isLoading}>
@@ -338,6 +343,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [promptHistory, setPromptHistory] = useState<any[]>([]);
   const [isSafetyOn, setIsSafetyOn] = useState(true);
   const [feedbackText, setFeedbackText] = useState('');
+  const [promptError, setPromptError] = useState<string | null>(null);
   
   const timeSpentRef = useRef(timeSpent);
   
@@ -493,13 +499,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   
     if (willBeRunning) {
       const finalPrompt = getFinalPrompt();
-      if (!finalPrompt.trim() || (isSafetyOn && finalPrompt.trim() === safetyPrefix.trim())) {
+      if (!starterPrompt.trim()) {
         setStatusText("Prompt is empty");
+        setPromptError("Prompt cannot be empty. Please enter a command.");
         const newEntry = { timestamp: Date.now(), level: 'warning', message: `Cannot start with an empty prompt.` };
         setConsoleEntries(prev => [newEntry, ...prev]);
         return;
       }
       
+      setPromptError(null);
       if (isPaused) setIsPaused(false);
       setIsRunning(true);
   
@@ -1001,6 +1009,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               isLoading={isLoading}
               isSafetyOn={isSafetyOn}
               safetyPrefix={safetyPrefix}
+              promptError={promptError}
             />
           </div>
 
@@ -1030,3 +1039,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
 
+
+
+    
