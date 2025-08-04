@@ -347,6 +347,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [promptError, setPromptError] = useState<string | null>(null);
   
   const timeSpentRef = useRef(timeSpent);
+  const isRunningRef = useRef(isRunning);
+  const isPausedRef = useRef(isPaused);
   
   const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
   const [isScanningSitemap, setIsScanningSitemap] = useState(false);
@@ -360,6 +362,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   useEffect(() => {
     timeSpentRef.current = timeSpent;
   }, [timeSpent]);
+  
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+    isPausedRef.current = isPaused;
+  }, [isRunning, isPaused]);
 
   // Function to save stats to Firestore
   const saveProjectStats = useCallback(async () => {
@@ -572,12 +579,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (isRunning) {
+      if (isRunningRef.current) {
         saveProjectStats();
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRunning]);
+  }, []);
 
 
   // Global error handler
@@ -630,6 +637,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       localStorage.setItem('looper-safety-switch', JSON.stringify(isSafetyOn));
     }
   }, [starterPrompt, consoleEntries, promptHistory, isSafetyOn]);
+  
+    // This is the core autonomous loop
+    useEffect(() => {
+        const autonomousLoop = async () => {
+            if (isRunningRef.current && !isPausedRef.current) {
+                await handleInjectPrompt();
+            }
+        };
+
+        const timeoutId = setTimeout(autonomousLoop, 3000); // Wait 3 seconds before next action
+
+        return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [starterPrompt, isRunning, isPaused]); // Rerun when the prompt changes while running
+
 
   const handleAuditPrompt = useCallback(async () => {
     if (isAuditing) return;
@@ -1069,4 +1091,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
