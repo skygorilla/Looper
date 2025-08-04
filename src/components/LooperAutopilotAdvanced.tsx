@@ -25,6 +25,7 @@ import {
   Info,
   Badge,
   Paintbrush,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -38,6 +39,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 
 interface TabProps {
   id: string;
@@ -333,6 +335,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [isLoading, setIsLoading] = useState(true);
   const [promptHistory, setPromptHistory] = useState<any[]>([]);
   const [isSafetyOn, setIsSafetyOn] = useState(true);
+  const [feedbackText, setFeedbackText] = useState('');
   
   const timeSpentRef = useRef(timeSpent);
   const isRunningRef = useRef(isRunning);
@@ -703,6 +706,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     downloadAnchorNode.remove();
   };
 
+  const handleSubmitFeedback = () => {
+    if (!feedbackText.trim()) return;
+    const newEntry = { timestamp: Date.now(), level: 'log', message: `Feedback submitted: ${feedbackText}` };
+    setConsoleEntries(prev => [newEntry, ...prev]);
+    setFeedbackText('');
+    // Here you would typically send the feedback to a Genkit flow
+    alert("Feedback submitted to console!");
+  };
+
   const handleGenerateSitemap = useCallback(async () => {
     if (typeof window === 'undefined' || isScanningSitemap) return;
     setIsScanningSitemap(true);
@@ -856,6 +868,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
             </div>
           </div>
       )},
+      { id: 'feedback', icon: Badge, title: "Feedback", description: "Provide feedback on the AI's performance.", iconClassName: "text-purple-400", children: (
+        <div className="w-full h-full flex flex-col text-left gap-2">
+          <Label htmlFor="feedback-textarea" className="text-slate-300">Your Feedback</Label>
+          <Textarea
+            id="feedback-textarea"
+            placeholder="How did the AI perform? What could be better?"
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+            className="flex-grow bg-slate-900/50"
+          />
+          <Button onClick={handleSubmitFeedback} size="sm" className="bg-primary hover:bg-primary/90">
+            <MessageSquare className="mr-2 h-4 w-4"/> Submit Feedback
+          </Button>
+        </div>
+      )},
       { id: 'time', icon: Clock, title: "Time Management", description: `Track time spent on the '${projectName}' project.`, iconClassName: "text-yellow-500", children: (
         <div className="w-full h-full flex flex-col items-center justify-center text-center">
           <div className="text-lg text-slate-400 mb-2">Time Spent on '{projectName}'</div>
@@ -897,8 +924,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         issueCount={tab.id === 'devtools' ? issues.length : undefined}
         className={cn(
           (tab.id === 'devtools') && activeTab === tab.id && "w-96 h-[450px]",
-          (tab.id === 'history' || tab.id === 'settings') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'devtools' && tab.id !== 'history' && tab.id !== 'settings') && activeTab === tab.id && "w-96 h-52",
+          (tab.id === 'history' || tab.id === 'settings' || tab.id === 'feedback') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'devtools' && tab.id !== 'history' && tab.id !== 'settings' && tab.id !== 'feedback') && activeTab === tab.id && "w-96 h-52",
         )}
       />
     );
@@ -911,14 +938,14 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   return (
       <div 
-        className={cn("relative transform scale-90", className)}
+        className="relative transform scale-90 w-full h-full flex items-center justify-center"
+        onClick={handleOutsideClick}
       >
         <div
           className="grid grid-cols-[auto_1fr_auto] grid-rows-1 gap-5 items-center justify-items-center p-5"
-          onClick={handleOutsideClick}
         >
           {/* Left */}
-          <div className="col-start-1 flex flex-col gap-5 justify-self-end">
+          <div className="col-start-1 flex flex-col gap-5 justify-self-end" onClick={(e) => e.stopPropagation()}>
             {renderTabs(TABS.left)}
           </div>
           
@@ -943,7 +970,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           </div>
 
           {/* Right */}
-          <div className="col-start-3 flex flex-col gap-5 justify-self-start">
+          <div className="col-start-3 flex flex-col gap-5 justify-self-start" onClick={(e) => e.stopPropagation()}>
             {renderTabs(TABS.right)}
           </div>
         </div>
@@ -959,3 +986,4 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
