@@ -291,11 +291,28 @@
     }
   };
   
+  // Get API key from chrome storage or use environment
+  let apiKey = null;
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.local.get(['openai-api-key'], function(result) {
+      apiKey = result['openai-api-key'];
+    });
+  }
+  
   window.chatWithLooper = async function() {
     const textarea = document.getElementById('starterPrompt');
     if (!textarea || !textarea.value.trim()) return;
     
     const userMessage = textarea.value.trim();
+    
+    // Check for API key
+    if (!apiKey) {
+      textarea.value = '🤖 Looper: Please set your OpenAI API key first. Go to chrome://extensions and configure Looper.';
+      setTimeout(() => {
+        textarea.value = '';
+      }, 4000);
+      return;
+    }
     
     // Show thinking state
     textarea.value = '🤖 Looper is thinking...';
@@ -307,18 +324,33 @@
     updateCounters();
     
     try {
-      // Simulate AI response (replace with real API)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Real OpenAI API call
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{
+            role: 'system',
+            content: 'You are Looper, a UI automation assistant. Help users with web automation, element selection, CSS selectors, XPath, and testing. Be concise and practical. Current page: ' + window.location.href
+          }, {
+            role: 'user',
+            content: userMessage
+          }],
+          max_tokens: 200,
+          temperature: 0.7
+        })
+      });
       
-      const responses = [
-        "I can help you automate UI tasks! Try using the scan function to analyze the current page.",
-        "For UI automation, I recommend starting with element identification. What specific task do you need help with?",
-        "I'm here to assist with web automation. You can use me to extract UI elements, audit accessibility, or analyze components.",
-        "Let me help you with that! I can scan pages, extract elements, and provide automation guidance.",
-        "Great question! For UI automation, I suggest using CSS selectors or XPath to target elements reliably."
-      ];
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
       
-      const aiResponse = responses[Math.floor(Math.random() * responses.length)];
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content || 'Sorry, I could not process that request.';
       
       // Show AI response
       textarea.value = `🤖 Looper: ${aiResponse}`;
