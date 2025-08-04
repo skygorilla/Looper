@@ -521,14 +521,13 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   // Cleanup on unmount
   useEffect(() => {
-    const isRunning = isRunning;
     return () => {
       if (isRunning) {
         saveProjectStats();
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isRunning]);
 
 
   // Global error handler
@@ -563,7 +562,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saveProjectStats]);
+  }, [saveProjectStats, isRunning]);
 
   // Timer logic
   useEffect(() => {
@@ -1025,6 +1024,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
 
