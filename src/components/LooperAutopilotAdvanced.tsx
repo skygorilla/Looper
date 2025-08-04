@@ -298,10 +298,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   // Effect to save totalCount whenever it changes
   useEffect(() => {
-    if(!isLoading) {
+    if(!isLoading && user) {
       saveProjectStats();
     }
-  }, [totalCount, isLoading, saveProjectStats]);
+  }, [totalCount, isLoading, saveProjectStats, user]);
 
 
   // Load state from local storage on mount
@@ -370,53 +370,40 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const handleStart = () => {
     if (isLoading) return;
     
-    // Always use this prompt when starting
-    const currentPrompt = "scan app and do not change anithing";
-    setStarterPrompt(currentPrompt);
-
     const willBeRunning = !isRunning;
-    setIsRunning(willBeRunning);
-    if (isPaused) setIsPaused(false);
-  
+
     if (willBeRunning) {
+      const currentPrompt = "scan app and do not change anithing";
+      setStarterPrompt(currentPrompt);
+      if (isPaused) setIsPaused(false);
+      setIsRunning(true);
+  
       addToHistory(currentPrompt);
       setSessionCount(prev => prev + 1);
-      setTotalCount(prev => prev + 1);
+      setTotalCount(prev => prev + 1); // This will trigger the saveProjectStats effect
   
       setStatusText('Processing...');
       setIsThinking(true);
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${currentPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
   
-      // Special handling for full scan prompt
-      if (currentPrompt === fullScanPrompt) {
-        setStatusText('Auditing, waiting, scanning...');
-        fullScanTimeoutRef.current = setTimeout(() => {
-          // Check if still running and not paused before re-triggering
-          if (isRunningRef.current && !isPausedRef.current) {
-            setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
-            handleStart(); // Re-call to loop
-          }
-        // Use a 60-second delay as specified in the prompt's "Buffer" section
-        }, 60000); 
-      } else {
-        // Standard non-looping behavior
-        setTimeout(() => {
-          if (isRunningRef.current) {
-            setStatusText('Task Complete');
-            setIsThinking(false);
-          }
-        }, 3000);
-      }
+      setStatusText('Auditing, waiting, scanning...');
+      fullScanTimeoutRef.current = setTimeout(() => {
+        if (isRunningRef.current && !isPausedRef.current) {
+          setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
+          handleStart();
+        }
+      }, 60000); 
     } else {
       // This is the 'Stop' action
+      setIsRunning(false);
       setStatusText('Stopped');
       setIsThinking(false);
       if (fullScanTimeoutRef.current) {
         clearTimeout(fullScanTimeoutRef.current);
         fullScanTimeoutRef.current = null;
       }
-      saveProjectStats();
+      saveProjectStats(); // Save on stop
     }
   };
 
@@ -535,7 +522,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         if(willBePaused) {
           setStatusText('Paused');
           setIsThinking(false);
-          saveProjectStats();
+          saveProjectStats(); // Save on pause
         } else {
           setStatusText('Processing...');
           if(isRunning) setIsThinking(true);
@@ -812,3 +799,4 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     
 
     
+
