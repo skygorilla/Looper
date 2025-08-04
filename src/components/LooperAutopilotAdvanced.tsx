@@ -324,6 +324,7 @@ Buffer:
 Waiting for 60 seconds (simulated pause). Awaiting your prompt to continue.`;
 
 const safetyPrefix = "IMPORTANT: Do not crash the app. Take cautious and deliberate steps. ";
+const defaultPrompt = "🤖 Smart Analysis Mode: Analyzing current page context...";
 
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -334,7 +335,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [totalCount, setTotalCount] = useState(0);
   const [consoleEntries, setConsoleEntries] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
-  const [starterPrompt, setStarterPrompt] = useState('');
+  const [starterPrompt, setStarterPrompt] = useState(defaultPrompt);
   const [statusText, setStatusText] = useState('Ready');
   const [isThinking, setIsThinking] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
@@ -493,13 +494,53 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     setPromptHistory(prev => [newEntry, ...prev.slice(0, 49)]);
   };
 
-  const handleStart = () => {
+  const handleScanChatHistory = useCallback(async () => {
+    if (typeof window === 'undefined' || isScanningChat) return false;
+    setIsScanningChat(true);
+    setChatHistory(null);
+    try {
+      const bodyHtml = document.body.outerHTML;
+      const result = await extractChatHistory({ html: bodyHtml });
+      setChatHistory(result.chatHistory);
+      if (result.chatHistory && result.chatHistory.length > 0) {
+        setStatusText("Context Acquired");
+        const lastUserMessage = result.chatHistory.filter(m => m.author === 'user').pop();
+        if(lastUserMessage) {
+            setStarterPrompt(lastUserMessage.message);
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error scanning chat history:", error);
+      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to scan chat history.' }, ...prev]);
+      return false;
+    } finally {
+      setIsScanningChat(false);
+    }
+  }, [isScanningChat]);
+
+  const handleStart = async () => {
     if (isLoading) return;
     const willBeRunning = !isRunning;
   
     if (willBeRunning) {
+      
+      if (starterPrompt === defaultPrompt) {
+        setIsThinking(true);
+        setStatusText("Acquiring context...");
+        const hasContext = await handleScanChatHistory();
+        setIsThinking(false);
+        if (!hasContext) {
+           setPromptError("No context found in chat. Please provide a specific command.");
+           const newEntry = { timestamp: Date.now(), level: 'warning', message: `Could not start: No chat context found.` };
+           setConsoleEntries(prev => [newEntry, ...prev]);
+           return;
+        }
+      }
+
       const finalPrompt = getFinalPrompt();
-      if (!starterPrompt.trim()) {
+      if (!starterPrompt.trim() || starterPrompt === defaultPrompt) {
         setStatusText("Prompt is empty");
         setPromptError("Prompt cannot be empty. Please enter a command.");
         const newEntry = { timestamp: Date.now(), level: 'warning', message: `Cannot start with an empty prompt.` };
@@ -655,7 +696,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       setSessionCount(0);
       setStatusText('Ready');
       setIsThinking(false);
-      setStarterPrompt('🤖 Smart Analysis Mode: Analyzing current page context...');
+      setStarterPrompt(defaultPrompt);
     }
   };
 
@@ -726,21 +767,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   }, [isScanningSitemap]);
   
-  const handleScanChatHistory = useCallback(async () => {
-    if (typeof window === 'undefined' || isScanningChat) return;
-    setIsScanningChat(true);
-    setChatHistory(null);
-    try {
-      const bodyHtml = document.body.outerHTML;
-      const result = await extractChatHistory({ html: bodyHtml });
-      setChatHistory(result.chatHistory);
-    } catch (error) {
-      console.error("Error scanning chat history:", error);
-      setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'error', message: 'Failed to scan chat history.' }, ...prev]);
-    } finally {
-      setIsScanningChat(false);
-    }
-  }, [isScanningChat]);
+  
 
   const formatTime = (totalSeconds: number) => {
     const days = Math.floor(totalSeconds / (3600 * 24));
@@ -1042,3 +1069,4 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
