@@ -504,25 +504,33 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const handleStart = () => {
     if (isLoading) return;
-    
+
     const willBeRunning = !isRunning;
 
     if (willBeRunning) {
-      const currentPrompt = "scan app and do not change anithing";
-      setStarterPrompt(currentPrompt);
+      // Use the prompt from the text area.
+      const currentPrompt = starterPrompt;
+      if (!currentPrompt.trim()) {
+        setStatusText("Prompt is empty");
+        const newEntry = { timestamp: Date.now(), level: 'warning', message: `Cannot start with an empty prompt.` };
+        setConsoleEntries(prev => [newEntry, ...prev]);
+        return;
+      }
+      
       if (isPaused) setIsPaused(false);
       setIsRunning(true);
-  
-      const finalPrompt = isSafetyOn ? `${safetyPrefix}${currentPrompt}` : currentPrompt;
+
+      const finalPrompt = getFinalPrompt();
       addToHistory(finalPrompt);
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
-  
+
       setStatusText('Processing...');
       setIsThinking(true);
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${finalPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
-  
+
+      // Handle the full scan case for auto-restarting.
       if (currentPrompt === fullScanPrompt) {
         setStatusText('Auditing, waiting, scanning...');
         fullScanTimeoutRef.current = setTimeout(() => {
@@ -1038,6 +1046,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
 
