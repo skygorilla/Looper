@@ -151,7 +151,7 @@ const MainPanel = ({
       <div className="text-center mb-6 cursor-move">
         <div className="grid grid-cols-3 items-center h-6 mb-3">
             <div className="justify-self-end">
-                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} style={{ width: 'auto' }}/>}
+                 {isThinking && <Image id="logoSpinner" src="https://ik.imagekit.io/oe3ifd1ja/Vector/think.svg?updatedAt=1753268203003" alt="Spinner" width={24} height={24} className="animate-rotate-think" style={{ width: 'auto' }}/>}
             </div>
             <div className={cn("text-white font-semibold transition-all justify-self-center", isRunning && "animate-glow")}>
                  <Image priority id="logoTextImg" src={isRunning ? "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_on.svg?updatedAt=1753374507503" : "https://ik.imagekit.io/oe3ifd1ja/Vector/looper_off.svg?updatedAt=1753374521185"} alt="Looper Logo" width={90} height={24} className={cn(isRunning && "drop-shadow-[0_0_6px_hsl(var(--primary))]")}/>
