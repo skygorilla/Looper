@@ -195,7 +195,96 @@ const MainPanel = ({
   )
 }
 
-const fullScanPrompt = `scan app and do not change anithing`;
+const fullScanPrompt = `Full Application Scan & New Task List Generation
+Role: Product Strategist and Senior Software Engineer
+We're performing a comprehensive, deep scan of the theoretical application space. Given our goal to build both frontend and backend files, our strategic prioritization for the top 3-5 most valuable, high-level features/improvements focuses on establishing the core architecture.
+
+We'll prioritize setting up the foundational structure first, as this underpins all subsequent development.
+
+HIGH_PRIORITY_TASKS.md (New List for Current Session)
+TASK #1: Establish Core Frontend Project Structure & Initial Files
+
+Status: To Do
+
+Product Rationale: To create a modern, scalable, and maintainable foundation for the user interface, enabling rapid development of UI components and pages.
+
+Internal Workflow Steps:
+
+1. Scan App (Role: Senior Software Engineer):
+
+Action: Research and select a suitable frontend framework (e.g., React, Vue, Angular) and project setup (e.g., Vite, Next.js, Create React App). Identify common folder structures for maintainability (components, pages, services, assets).
+
+Goal: Define the initial tech stack and directory layout.
+
+2. Check & Resolve Console & System Performance (Role: Expert Debugger / DevOps Engineer):
+
+Action: No active console or system to monitor yet, but plan for future monitoring integration (e.g., how to include performance metrics in a development server).
+
+Goal: Anticipate and plan for performance checks from the outset.
+
+3. Check & Resolve Possible Improvements & Frontend Performance (Role: Design Technologist / Senior Software Engineer):
+
+Action: Draft a .gitignore file and consider initial linting/formatting configurations (e.g., ESLint, Prettier) to promote code quality.
+
+Goal: Ensure foundational development practices are in place.
+
+4. Final Review & Completion (Role: Senior Software Engineer / Product Manager):
+
+Action: Verify the project setup is complete and all initial files are correctly placed.
+
+Goal: Confirm readiness for component development.
+
+TASK #2: Establish Core Backend API Project Structure & Initial Files
+
+Status: To Do
+
+Product Rationale: To provide a robust and secure foundation for data management, business logic, and API endpoints, supporting the frontend application.
+
+Internal Workflow Steps:
+
+1. Scan App (Role: Senior Software Engineer):
+
+Action: Research and select a suitable backend framework (e.g., Node.js with Express/NestJS, Python with Django/Flask, Go with Gin). Define initial API endpoint patterns and database connection strategy.
+
+Goal: Define the initial backend tech stack and directory layout.
+
+2. Check & Resolve Console & System Performance (Role: DevOps Engineer):
+
+Action: Plan for server-side performance monitoring tools (e.g., Prometheus, Grafana, built-in framework logging) to track CPU, RAM, and network I/O.
+
+Goal: Proactively establish monitoring strategies for backend resources.
+
+3. Check & Resolve Possible Improvements & Frontend Performance (Role: Security Specialist / DevOps Engineer):
+
+Action: Implement basic security considerations (e.g., CORS setup, environment variable management for sensitive data) and prepare for dependency management (e.g., package.json for Node.js).
+
+Goal: Ensure foundational security and maintainability.
+
+4. Final Review & Completion (Role: Senior Software Engineer / Product Manager):
+
+Action: Verify the backend project setup is complete and all initial files are correctly placed.
+
+Goal: Confirm readiness for API endpoint development.
+
+TASK #3: Re-initiate Full Application Scan and Prioritization
+
+Status: To Do
+
+Product Rationale: To ensure continuous, proactive application enhancement and identify evolving priorities as the project progresses.
+
+Internal Workflow Steps:
+
+1. Initiate Scan (Role: Product Strategist):
+
+Action: Signal the need for a new comprehensive scan.
+
+Goal: Trigger the next iteration of strategic planning.
+
+Signal:
+New HIGH_PRIORITY_TASKS.md generated. Ready to proceed with TASK #1's internal workflow.
+
+Buffer:
+Waiting for 60 seconds (simulated pause). Awaiting your prompt to continue.`;
 
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -380,20 +469,22 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   
       addToHistory(currentPrompt);
       setSessionCount(prev => prev + 1);
-      setTotalCount(prev => prev + 1); // This will trigger the saveProjectStats effect
+      setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
       setIsThinking(true);
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${currentPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
   
-      setStatusText('Auditing, waiting, scanning...');
-      fullScanTimeoutRef.current = setTimeout(() => {
-        if (isRunningRef.current && !isPausedRef.current) {
-          setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
-          handleStart();
-        }
-      }, 60000); 
+      if (currentPrompt === fullScanPrompt) {
+        setStatusText('Auditing, waiting, scanning...');
+        fullScanTimeoutRef.current = setTimeout(() => {
+          if (isRunningRef.current && !isPausedRef.current) {
+            setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
+            handleStart();
+          }
+        }, 60000); 
+      }
     } else {
       // This is the 'Stop' action
       setIsRunning(false);
@@ -799,4 +890,5 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     
 
     
+
 
