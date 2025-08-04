@@ -339,10 +339,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [feedbackText, setFeedbackText] = useState('');
   
   const timeSpentRef = useRef(timeSpent);
-  const isRunningRef = useRef(isRunning);
-  const isPausedRef = useRef(isPaused);
-  const fullScanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  
   const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
   const [isScanningSitemap, setIsScanningSitemap] = useState(false);
 
@@ -355,18 +352,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   useEffect(() => {
     timeSpentRef.current = timeSpent;
   }, [timeSpent]);
-  
-  useEffect(() => {
-    isRunningRef.current = isRunning;
-    isPausedRef.current = isPaused;
-    // If user stops or pauses, clear the auto-rescan timeout
-    if (!isRunning || isPaused) {
-      if (fullScanTimeoutRef.current) {
-        clearTimeout(fullScanTimeoutRef.current);
-        fullScanTimeoutRef.current = null;
-      }
-    }
-  }, [isRunning, isPaused]);
 
   // Function to save stats to Firestore
   const saveProjectStats = useCallback(async () => {
@@ -494,9 +479,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const addToHistory = (prompt: string) => {
     if (!prompt.trim()) return;
-    const finalPrompt = getFinalPrompt();
     const newEntry = {
-      prompt: finalPrompt,
+      prompt: prompt,
       timestamp: Date.now(),
     };
     setPromptHistory(prev => [newEntry, ...prev.slice(0, 49)]);
@@ -507,7 +491,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     const willBeRunning = !isRunning;
   
     if (willBeRunning) {
-      if (!starterPrompt.trim()) {
+      const finalPrompt = getFinalPrompt();
+      if (!finalPrompt.trim() || (isSafetyOn && finalPrompt.trim() === safetyPrefix.trim())) {
         setStatusText("Prompt is empty");
         const newEntry = { timestamp: Date.now(), level: 'warning', message: `Cannot start with an empty prompt.` };
         setConsoleEntries(prev => [newEntry, ...prev]);
@@ -517,7 +502,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       if (isPaused) setIsPaused(false);
       setIsRunning(true);
   
-      const finalPrompt = getFinalPrompt();
       addToHistory(finalPrompt);
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
@@ -526,36 +510,21 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       setIsThinking(true);
       const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${finalPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
-  
-      if (starterPrompt === fullScanPrompt) {
-        setStatusText('Auditing, waiting, scanning...');
-        fullScanTimeoutRef.current = setTimeout(() => {
-          if (isRunningRef.current && !isPausedRef.current) {
-            setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'log', message: 'Scan complete. Re-initiating scan...' }, ...prev]);
-            handleStart(); // Recursive call to re-initiate
-          }
-        }, 60000); 
-      }
+
     } else {
       setIsRunning(false);
       setStatusText('Stopped');
       setIsThinking(false);
-      if (fullScanTimeoutRef.current) {
-        clearTimeout(fullScanTimeoutRef.current);
-        fullScanTimeoutRef.current = null;
-      }
       saveProjectStats();
     }
   };
 
   // Cleanup on unmount
   useEffect(() => {
+    const isRunning = isRunning;
     return () => {
-      if (isRunningRef.current) {
+      if (isRunning) {
         saveProjectStats();
-      }
-      if (fullScanTimeoutRef.current) {
-        clearTimeout(fullScanTimeoutRef.current);
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -589,10 +558,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
     return () => {
       window.removeEventListener('error', handleError);
-      if (isRunningRef.current) {
+      if (isRunning) {
         saveProjectStats();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveProjectStats]);
 
   // Timer logic
@@ -1055,6 +1025,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
     
+
 
 
 
