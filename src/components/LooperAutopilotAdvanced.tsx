@@ -241,19 +241,68 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     }
   }, [isRunning, isPaused]);
 
-  // Function to save time spent to Firestore
-  const saveTimeSpent = useCallback(async () => {
+  // Function to save stats to Firestore
+  const saveProjectStats = useCallback(async () => {
     if (user && projectName) {
-      if (timeSpentRef.current === 0) return;
       const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
       const docRef = doc(db, "projectStats", docId);
       try {
         await setDoc(docRef, { timeSpent: timeSpentRef.current, totalCount }, { merge: true });
       } catch (error) {
-          console.error("Error saving time spent:", error);
+          console.error("Error saving project stats:", error);
       }
     }
   }, [user, projectName, totalCount]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) {
+        setIsLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Effect to load data once user and projectName are available
+  useEffect(() => {
+    const loadProjectStats = async () => {
+      if (user && projectName) {
+        setIsLoading(true);
+        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
+        const docRef = doc(db, "projectStats", docId);
+        try {
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setTimeSpent(data.timeSpent || 0);
+            setTotalCount(data.totalCount || 0);
+          } else {
+            // If no doc, initialize counts locally and in Firestore
+            setTimeSpent(0);
+            setTotalCount(0);
+            await setDoc(docRef, { timeSpent: 0, totalCount: 0 });
+          }
+        } catch (error) {
+          console.error("Error fetching project stats:", error);
+          setTimeSpent(0);
+          setTotalCount(0);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadProjectStats();
+  }, [user, projectName]);
+
+
+  // Effect to save totalCount whenever it changes
+  useEffect(() => {
+    if(!isLoading) {
+      saveProjectStats();
+    }
+  }, [totalCount, isLoading, saveProjectStats]);
+
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -367,50 +416,22 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         clearTimeout(fullScanTimeoutRef.current);
         fullScanTimeoutRef.current = null;
       }
-      saveTimeSpent();
+      saveProjectStats();
     }
   };
 
+  // Cleanup on unmount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser && projectName) {
-        setIsLoading(true);
-        const docId = `project_stats_${projectName.replace(/\s+/g, '_')}`;
-        const docRef = doc(db, "projectStats", docId);
-        try {
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setTimeSpent(data.timeSpent || 0);
-            setTotalCount(data.totalCount || 0);
-          } else {
-            // If no doc, initialize counts in Firestore
-            setTimeSpent(0);
-            setTotalCount(0);
-            await setDoc(docRef, { timeSpent: 0, totalCount: 0 });
-          }
-        } catch (error) {
-          console.error("Error fetching project stats:", error);
-          setTimeSpent(0);
-          setTotalCount(0);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    });
-
-    // Save on unmount
     return () => {
-      unsubscribe();
-      saveTimeSpent();
-      // Cleanup timeout on component unmount
+      if (isRunningRef.current) {
+        saveProjectStats();
+      }
       if (fullScanTimeoutRef.current) {
         clearTimeout(fullScanTimeoutRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectName]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   // Global error handler
@@ -440,9 +461,11 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
     return () => {
       window.removeEventListener('error', handleError);
-      saveTimeSpent();
+      if (isRunningRef.current) {
+        saveProjectStats();
+      }
     };
-  }, [saveTimeSpent]);
+  }, [saveProjectStats]);
 
   // Timer logic
   useEffect(() => {
@@ -512,7 +535,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         if(willBePaused) {
           setStatusText('Paused');
           setIsThinking(false);
-          saveTimeSpent();
+          saveProjectStats();
         } else {
           setStatusText('Processing...');
           if(isRunning) setIsThinking(true);
@@ -786,4 +809,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   );
 };
     
+    
+
     
