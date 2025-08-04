@@ -24,6 +24,7 @@ import {
   Activity,
   Info,
   Badge,
+  Paintbrush,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -35,6 +36,8 @@ import { auditUICommands, type AuditUICommandsOutput } from '@/ai/flows/audit-ui
 import { extractUICommands } from '@/ai/flows/extract-ui-commands';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
 
 interface TabProps {
   id: string;
@@ -119,8 +122,22 @@ const MainPanel = ({
   starterPrompt,
   setStarterPrompt,
   handleInjectPrompt,
-  isLoading
+  isLoading,
+  isSafetyOn,
+  safetyPrefix,
 }: any) => {
+
+  const displayedPrompt = isSafetyOn ? `${safetyPrefix}${starterPrompt}` : starterPrompt;
+
+  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (isSafetyOn && value.startsWith(safetyPrefix)) {
+      setStarterPrompt(value.substring(safetyPrefix.length));
+    } else {
+      setStarterPrompt(value);
+    }
+  };
+
   return (
     <div className="w-[300px] h-[652px] p-7 rounded-[60px] bg-gradient-to-b from-[#353A40] to-[#16171B] shadow-2xl flex flex-col font-sans relative" onClick={(e) => e.stopPropagation()}>
         <button className="absolute top-[-50px] right-[-50px] w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[10px_15px_40px_#000000,-10px_-15px_40px_#2F393D] hover:shadow-[6px_6px_12px_rgba(0,0,0,0.7),-6px_-6px_12px_rgba(47,57,61,0.7)] hover:scale-105 active:shadow-[inset_8px_8px_16px_rgba(0,0,0,0.7),inset_-8px_-8px_16px_rgba(47,57,61,0.7)] transition-all duration-200" data-tooltip="Close">
@@ -176,8 +193,8 @@ const MainPanel = ({
       <textarea 
         id="starterPrompt"
         className="w-full flex-grow p-4 rounded-2xl bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] shadow-[inset_12px_12px_24px_rgba(16,16,18,0.75),inset_-12px_-12px_24px_#262E32] text-white text-sm resize-none mb-5 focus:outline-none focus:ring-2 focus:ring-primary"
-        value={starterPrompt}
-        onChange={(e) => setStarterPrompt(e.target.value)}
+        value={displayedPrompt}
+        onChange={handlePromptChange}
         placeholder="🤖 Smart Analysis Mode: Analyzing current page context..."
         spellCheck={false}
       />
@@ -194,6 +211,17 @@ const MainPanel = ({
     </div>
   )
 }
+
+const refactorCssPrompt = `Refactor CSS from Hardcoded HTML
+Role: Senior Frontend Engineer
+Task: Analyze the current page's HTML to identify elements with inline styles or hardcoded, non-utility CSS classes. Extract these styles into a separate CSS file and replace the inline styles with appropriate utility classes.
+
+Internal Workflow Steps:
+1. Scan DOM for Inline Styles: Identify all elements with a 'style' attribute.
+2. Analyze Styles: Group common styling patterns (e.g., flexbox containers, cards, buttons).
+3. Generate Utility Classes: Create meaningful utility classes in a new CSS file (e.g., 'looper-card', 'looper-button').
+4. Replace Inline Styles: Remove the 'style' attributes from the HTML and apply the new utility classes.
+5. Final Review: Verify that the visual appearance of the page is unchanged and that all styles have been successfully extracted.`;
 
 const fullScanPrompt = `Full Application Scan & New Task List Generation
 Role: Product Strategist and Senior Software Engineer
@@ -286,9 +314,11 @@ New HIGH_PRIORITY_TASKS.md generated. Ready to proceed with TASK #1's internal w
 Buffer:
 Waiting for 60 seconds (simulated pause). Awaiting your prompt to continue.`;
 
+const safetyPrefix = "IMPORTANT: Do not crash the app. Take cautious and deliberate steps. ";
+
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [activeDevToolsTab, setActiveDevToolsTab] = useState('console');
+  const [activeDevToolsTab] = useState('console');
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
@@ -302,6 +332,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [promptHistory, setPromptHistory] = useState<any[]>([]);
+  const [isSafetyOn, setIsSafetyOn] = useState(true);
   
   const timeSpentRef = useRef(timeSpent);
   const isRunningRef = useRef(isRunning);
@@ -404,6 +435,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       
       const savedHistory = localStorage.getItem('looper-history');
       if (savedHistory) setPromptHistory(JSON.parse(savedHistory));
+
+      const savedSafetySwitch = localStorage.getItem('looper-safety-switch');
+      if (savedSafetySwitch) setIsSafetyOn(JSON.parse(savedSafetySwitch));
     }
   }, []);
 
@@ -446,11 +480,16 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
        console.error('Audio could not play', e);
     }
   };
+  
+  const getFinalPrompt = useCallback(() => {
+    return isSafetyOn ? `${safetyPrefix}${starterPrompt}` : starterPrompt;
+  }, [isSafetyOn, starterPrompt]);
 
   const addToHistory = (prompt: string) => {
     if (!prompt.trim()) return;
+    const finalPrompt = getFinalPrompt();
     const newEntry = {
-      prompt,
+      prompt: finalPrompt,
       timestamp: Date.now(),
     };
     setPromptHistory(prev => [newEntry, ...prev.slice(0, 49)]);
@@ -467,13 +506,14 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       if (isPaused) setIsPaused(false);
       setIsRunning(true);
   
-      addToHistory(currentPrompt);
+      const finalPrompt = isSafetyOn ? `${safetyPrefix}${currentPrompt}` : currentPrompt;
+      addToHistory(finalPrompt);
       setSessionCount(prev => prev + 1);
       setTotalCount(prev => prev + 1);
   
       setStatusText('Processing...');
       setIsThinking(true);
-      const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${currentPrompt.substring(0, 50)}...` };
+      const newEntry = { timestamp: Date.now(), level: 'log', message: `Autopilot starting with prompt: ${finalPrompt.substring(0, 50)}...` };
       setConsoleEntries(prev => [newEntry, ...prev]);
   
       if (currentPrompt === fullScanPrompt) {
@@ -562,15 +602,17 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       localStorage.setItem('starterPrompt', starterPrompt);
       localStorage.setItem('looper-console', JSON.stringify(consoleEntries));
       localStorage.setItem('looper-history', JSON.stringify(promptHistory));
+      localStorage.setItem('looper-safety-switch', JSON.stringify(isSafetyOn));
     }
-  }, [starterPrompt, consoleEntries, promptHistory]);
+  }, [starterPrompt, consoleEntries, promptHistory, isSafetyOn]);
 
   const handleAuditPrompt = useCallback(async () => {
     if (isAuditing) return;
     setIsAuditing(true);
     setAuditResult(null);
     try {
-      const result = await auditUICommands({ prompt: starterPrompt });
+      const finalPrompt = getFinalPrompt();
+      const result = await auditUICommands({ prompt: finalPrompt });
       setAuditResult(result);
     } catch (error) {
       console.error("Error auditing prompt:", error);
@@ -579,7 +621,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     } finally {
       setIsAuditing(false);
     }
-  }, [isAuditing, starterPrompt]);
+  }, [isAuditing, getFinalPrompt]);
 
   const handleTabClick = (tabId: string) => {
     playTabBeep();
@@ -591,18 +633,19 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         setActiveTab(null); // Don't keep the tab open
         return;
     }
+     if (tabId === 'refactor-css') {
+        setStarterPrompt(refactorCssPrompt);
+        addToHistory(refactorCssPrompt);
+        const newEntry = { timestamp: Date.now(), level: 'log', message: 'Loaded Refactor CSS prompt.' };
+        setConsoleEntries(prev => [newEntry, ...prev]);
+        setActiveTab(null); // Don't keep the tab open
+        return;
+    }
     const newActiveTab = activeTab === tabId ? null : tabId;
     setActiveTab(newActiveTab);
   };
   
   const handleDevToolsSubTabChange = (value: string) => {
-    setActiveDevToolsTab(value);
-    if (value === 'sitemap') {
-      handleGenerateSitemap();
-    }
-    if (value === 'audit') {
-      handleAuditPrompt();
-    }
   }
 
 
@@ -633,11 +676,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   };
 
   const handleInjectPrompt = async () => {
-    addToHistory(starterPrompt);
-    const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${starterPrompt.substring(0, 50)}...` };
+    const finalPrompt = getFinalPrompt();
+    addToHistory(finalPrompt);
+    const newEntry = { timestamp: Date.now(), level: 'api', message: `Injecting prompt: ${finalPrompt.substring(0, 50)}...` };
     setConsoleEntries(prev => [newEntry, ...prev]);
     try {
-      const result = await extractUICommands({ prompt: starterPrompt, targetTextareaId: 'starterPrompt' });
+      const result = await extractUICommands({ prompt: finalPrompt, targetTextareaId: 'starterPrompt' });
       setConsoleEntries(prev => [{ timestamp: Date.now(), level: 'api', message: `Injection result: ${result.result}` }, ...prev]);
     } catch (error) {
       console.error("Error injecting prompt:", error);
@@ -699,9 +743,10 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
   const getTabsConfig = (projectName: string) => ({
     left: [
+       { id: 'refactor-css', icon: Paintbrush, title: "Refactor CSS", description: `Injects a prompt to refactor hardcoded HTML and extract CSS.`, iconClassName: "text-blue-400" },
        { id: 'devtools', icon: Terminal, title: "DevTools", description: "View console logs and captured issues.", iconClassName: "text-slate-400", children: (
         <div className="w-full h-full flex flex-col text-left" onClick={(e) => e.stopPropagation()}>
-          <Tabs defaultValue={activeDevToolsTab} onValueChange={handleDevToolsSubTabChange} className="w-full h-full flex flex-col">
+          <Tabs defaultValue={'console'} className="w-full h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="console">Console</TabsTrigger>
               <TabsTrigger value="issues">Issues</TabsTrigger>
@@ -823,6 +868,19 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
           )}
         </div>
       ) },
+      { id: 'settings', icon: Settings, title: "Settings", description: "Configure Looper behavior.", iconClassName: "text-gray-400", children: (
+        <div className="w-full h-full flex flex-col items-start justify-start text-left pt-4">
+           <div className="flex items-center space-x-2 w-full justify-between">
+            <Label htmlFor="safety-switch" className="text-slate-300">Safety Switch</Label>
+            <Switch
+              id="safety-switch"
+              checked={isSafetyOn}
+              onCheckedChange={setIsSafetyOn}
+            />
+          </div>
+          <p className="text-xs text-slate-500 mt-2">When enabled, adds a safety warning to every prompt to prevent accidental app crashes.</p>
+        </div>
+      )},
     ],
   });
 
@@ -839,8 +897,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
         issueCount={tab.id === 'devtools' ? issues.length : undefined}
         className={cn(
           (tab.id === 'devtools') && activeTab === tab.id && "w-96 h-[450px]",
-          (tab.id === 'history') && activeTab === tab.id && "w-80 h-96",
-          (tab.id !== 'devtools' && tab.id !== 'history') && activeTab === tab.id && "w-96 h-52",
+          (tab.id === 'history' || tab.id === 'settings') && activeTab === tab.id && "w-80 h-96",
+          (tab.id !== 'devtools' && tab.id !== 'history' && tab.id !== 'settings') && activeTab === tab.id && "w-96 h-52",
         )}
       />
     );
@@ -876,6 +934,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               setStarterPrompt={setStarterPrompt}
               handleInjectPrompt={handleInjectPrompt}
               isLoading={isLoading}
+              isSafetyOn={isSafetyOn}
+              safetyPrefix={safetyPrefix}
             />
           </div>
 
@@ -892,3 +952,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     
 
 
+
+
+    
