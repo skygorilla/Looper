@@ -103,8 +103,8 @@
 
           <!-- Header -->
           <div style="text-align: center; margin-bottom: 24px;">
-            <div style="color: white; font-weight: 600; margin-bottom: 12px;">🤖 Looper Gemini</div>
-            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af;">Ready to Chat</div>
+            <div style="color: white; font-weight: 600; margin-bottom: 12px;">🤖 Looper AI</div>
+            <div id="status-text" style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af;">Ready to Chat</div>
           </div>
 
           <!-- Stats -->
@@ -189,27 +189,49 @@
             outline: none;
           " placeholder="🤖 Ask Looper Gemini anything about UI automation..."></textarea>
 
-          <!-- Chat Button -->
-          <button onclick="chatWithLooper()" style="
-            width: 100%;
-            height: 56px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-            box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
-            border: none;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            margin-bottom: 20px;
-            font-weight: 600;
-            position: relative;
-            z-index: 12;
-          ">
-            💬 Chat with Looper
-          </button>
+          <!-- Chat Buttons -->
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button onclick="chatWithLooper()" style="
+              flex: 1;
+              height: 56px;
+              border-radius: 16px;
+              background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+              box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
+              border: none;
+              color: white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s ease;
+              font-weight: 600;
+              position: relative;
+              z-index: 12;
+              font-size: 12px;
+            ">
+              💬 Chat
+            </button>
+            <button onclick="quickInject()" style="
+              flex: 1;
+              height: 56px;
+              border-radius: 16px;
+              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+              box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
+              border: none;
+              color: white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s ease;
+              font-weight: 600;
+              position: relative;
+              z-index: 12;
+              font-size: 12px;
+            ">
+              ⚡ Inject
+            </button>
+          </div>
 
           <!-- Footer -->
           <div style="text-align: center; font-size: 12px; color: #6b7280; margin-top: auto;">
@@ -359,7 +381,7 @@
     if (hostname.includes('github.com')) {
       context.platform = 'GitHub';
       context.tool = 'Git Repository';
-    } else if (hostname.includes('vscode.dev') || hostname.includes('github.dev')) {
+    } else if (hostname.includes('vscode.dev') || hostname.includes('github.dev') || document.querySelector('.mynah-chat-prompt')) {
       context.platform = 'VS Code Web';
       context.tool = 'Code Editor';
     } else if (hostname.includes('figma.com')) {
@@ -374,19 +396,17 @@
     }
     
     // Detect chat systems
-    if (document.querySelector('[data-testid="chat-input"]') || document.querySelector('.chat-input')) {
+    if (document.querySelector('.mynah-chat-prompt') || document.querySelector('[data-testid="prompt-input-textarea"]')) {
+      context.chatSystem = 'Amazon Q (Claude Sonnet 3.7)';
+    } else if (document.querySelector('[data-testid="chat-input"]') || document.querySelector('.chat-input')) {
       context.chatSystem = 'Generic Chat Interface';
-    }
-    if (document.querySelector('[data-qa="chat-input"]') || title.includes('Claude')) {
+    } else if (document.querySelector('[data-qa="chat-input"]') || title.includes('Claude')) {
       context.chatSystem = 'Claude (Anthropic)';
-    }
-    if (document.querySelector('[aria-label*="Amazon Q"]') || title.includes('Amazon Q')) {
+    } else if (document.querySelector('[aria-label*="Amazon Q"]') || title.includes('Amazon Q')) {
       context.chatSystem = 'Amazon Q (Claude Sonnet 3.5)';
-    }
-    if (document.querySelector('[data-testid="prompt-textarea"]') || hostname.includes('openai.com')) {
+    } else if (document.querySelector('[data-testid="prompt-textarea"]') || hostname.includes('openai.com')) {
       context.chatSystem = 'ChatGPT (OpenAI)';
-    }
-    if (document.querySelector('[data-testid="bard"]') || hostname.includes('bard.google.com')) {
+    } else if (document.querySelector('[data-testid="bard"]') || hostname.includes('bard.google.com')) {
       context.chatSystem = 'Bard (Google)';
     }
     
@@ -408,12 +428,12 @@
     if (context.platform === 'VS Code Web' && context.chatSystem.includes('Amazon Q')) {
       
       // Look for Amazon Q asking to run
-      const chatMessages = document.querySelectorAll('[data-qa="chat-message"], .chat-message, [role="article"]');
+      const chatMessages = document.querySelectorAll('.mynah-chat-item-card, [data-qa="chat-message"], .chat-message, [role="article"]');
       let shouldRun = false;
       
       chatMessages.forEach(msg => {
         const text = msg.textContent.toLowerCase();
-        if (text.includes('run') && (text.includes('code') || text.includes('script') || text.includes('command'))) {
+        if (text.includes('run') && (text.includes('code') || text.includes('script') || text.includes('command') || text.includes('execute'))) {
           shouldRun = true;
         }
       });
@@ -489,13 +509,64 @@
   }
   
   // Start monitoring after page loads
-  setTimeout(startAutoMonitoring, 3000);
+  setTimeout(() => {
+    startAutoMonitoring();
+    
+    // Update status based on environment
+    const context = detectPageContext();
+    const statusEl = document.getElementById('status-text');
+    if (statusEl) {
+      if (context.platform === 'VS Code Web' && context.chatSystem.includes('Amazon Q')) {
+        statusEl.textContent = 'VS Code + Amazon Q Detected';
+        statusEl.style.color = '#22c55e';
+      } else {
+        statusEl.textContent = `${context.platform} Detected`;
+      }
+    }
+  }, 3000);
+  
+  // Function to inject prompt into Amazon Q and hit enter
+  function injectIntoAmazonQ(message) {
+    const amazonQInput = document.querySelector('[data-testid="prompt-input-textarea"]');
+    const amazonQButton = document.querySelector('[data-testid="prompt-input-send-button"]');
+    
+    if (amazonQInput && amazonQButton) {
+      // Clear and set the message
+      amazonQInput.textContent = message;
+      amazonQInput.innerText = message;
+      
+      // Trigger input events
+      amazonQInput.dispatchEvent(new Event('input', { bubbles: true }));
+      amazonQInput.dispatchEvent(new Event('change', { bubbles: true }));
+      
+      // Click the send button
+      setTimeout(() => {
+        amazonQButton.click();
+        console.log('🚀 Looper: Injected into Amazon Q and sent');
+      }, 500);
+      
+      return true;
+    }
+    return false;
+  }
   
   window.chatWithLooper = async function() {
     const textarea = document.getElementById('starterPrompt');
     if (!textarea || !textarea.value.trim()) return;
     
     const userMessage = textarea.value.trim();
+    const context = detectPageContext();
+    
+    // If we're in VS Code with Amazon Q, inject directly
+    if (context.platform === 'VS Code Web' && context.chatSystem.includes('Amazon Q')) {
+      if (injectIntoAmazonQ(userMessage)) {
+        textarea.value = '🚀 Injected into Amazon Q!';
+        setTimeout(() => {
+          textarea.value = '';
+        }, 2000);
+        return;
+      }
+    }
     
     // Gemini API is built-in, no key needed
     
@@ -629,6 +700,37 @@ User: ${userMessage}`
       setTimeout(() => {
         textarea.value = '';
       }, 3000);
+    }
+  };
+  
+  window.quickInject = function() {
+    const textarea = document.getElementById('starterPrompt');
+    if (!textarea || !textarea.value.trim()) return;
+    
+    const message = textarea.value.trim();
+    const context = detectPageContext();
+    
+    if (context.platform === 'VS Code Web' && context.chatSystem.includes('Amazon Q')) {
+      if (injectIntoAmazonQ(message)) {
+        textarea.value = '⚡ Injected into Amazon Q!';
+        sessionCount++;
+        totalCount++;
+        updateCounters();
+        
+        setTimeout(() => {
+          textarea.value = '';
+        }, 2000);
+      } else {
+        textarea.value = '❌ Amazon Q not found';
+        setTimeout(() => {
+          textarea.value = message;
+        }, 2000);
+      }
+    } else {
+      textarea.value = '❌ Not in VS Code + Amazon Q';
+      setTimeout(() => {
+        textarea.value = message;
+      }, 2000);
     }
   };
   
