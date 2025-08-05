@@ -144,25 +144,22 @@
                   <polygon points="5,3 19,12 5,21"></polygon>
                 </svg>
               </button>
-              <button onclick="clearChat()" style="
+              <button onclick="toggleAutoRun()" id="autoRunBtn" style="
                 flex: 1;
                 height: 56px;
                 border-radius: 16px;
-                background: linear-gradient(135deg, #1F2328 0%, #1A1C1F 100%);
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
                 box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
                 border: none;
-                color: #f59e0b;
+                color: white;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 transition: all 0.2s ease;
+                font-size: 12px;
               ">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                </svg>
+                🚀 AUTO
               </button>
             </div>
           </div>
@@ -353,6 +350,95 @@
     return context;
   }
   
+  // Autonomous actions based on context
+  function performAutonomousActions(context) {
+    // Auto-click Run button when Amazon Q asks to run code in VS Code
+    if (context.platform === 'VS Code Web' && context.chatSystem.includes('Amazon Q')) {
+      
+      // Look for Amazon Q asking to run
+      const chatMessages = document.querySelectorAll('[data-qa="chat-message"], .chat-message, [role="article"]');
+      let shouldRun = false;
+      
+      chatMessages.forEach(msg => {
+        const text = msg.textContent.toLowerCase();
+        if (text.includes('run') && (text.includes('code') || text.includes('script') || text.includes('command'))) {
+          shouldRun = true;
+        }
+      });
+      
+      if (shouldRun) {
+        // Find and click Run button
+        const runSelectors = [
+          'button[title*="Run"]',
+          'button[aria-label*="Run"]', 
+          'button:contains("Run")',
+          '.codicon-run',
+          '.run-button',
+          '[data-command="workbench.action.debug.run"]',
+          '[data-command="workbench.action.terminal.runActiveFile"]'
+        ];
+        
+        for (const selector of runSelectors) {
+          const runBtn = document.querySelector(selector);
+          if (runBtn && runBtn.offsetParent !== null) { // visible
+            console.log('🚀 Looper: Auto-clicking Run button');
+            runBtn.click();
+            return true;
+          }
+        }
+        
+        // Try keyboard shortcut as fallback
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'F5',
+          code: 'F5',
+          keyCode: 116,
+          bubbles: true
+        }));
+        
+        console.log('🚀 Looper: Sent F5 run shortcut');
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  // Auto-monitor for run requests
+  let autoRunEnabled = true;
+  
+  function startAutoMonitoring() {
+    if (!autoRunEnabled) return;
+    
+    const context = detectPageContext();
+    
+    // Check every 2 seconds for run requests
+    setInterval(() => {
+      if (autoRunEnabled) {
+        performAutonomousActions(context);
+      }
+    }, 2000);
+    
+    // Also monitor for new chat messages
+    const observer = new MutationObserver((mutations) => {
+      if (!autoRunEnabled) return;
+      
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length > 0) {
+          // New content added, check for run requests
+          setTimeout(() => performAutonomousActions(context), 500);
+        }
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+  
+  // Start monitoring after page loads
+  setTimeout(startAutoMonitoring, 3000);
+  
   window.chatWithLooper = async function() {
     const textarea = document.getElementById('starterPrompt');
     if (!textarea || !textarea.value.trim()) return;
@@ -432,6 +518,21 @@ User: ${userMessage}`
       if (typeof chrome !== 'undefined' && chrome.storage) {
         chrome.storage.local.set({'looper-total-count': totalCount});
       }
+    }
+  };
+  
+  window.toggleAutoRun = function() {
+    autoRunEnabled = !autoRunEnabled;
+    const btn = document.getElementById('autoRunBtn');
+    
+    if (autoRunEnabled) {
+      btn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+      btn.innerHTML = '🚀 AUTO';
+      console.log('🚀 Looper: Auto-run ENABLED');
+    } else {
+      btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+      btn.innerHTML = '❌ OFF';
+      console.log('🚀 Looper: Auto-run DISABLED');
     }
   };
   
