@@ -26,6 +26,8 @@ import {
   Badge,
   Paintbrush,
   MessageSquare,
+  Code,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -130,6 +132,7 @@ const MainPanel = ({
   isSafetyOn,
   safetyPrefix,
   promptError,
+  developerMode,
 }: any) => {
 
   const displayedPrompt = isSafetyOn ? `${safetyPrefix}${starterPrompt}` : starterPrompt;
@@ -160,7 +163,7 @@ const MainPanel = ({
               {!isThinking && <div className="w-6 h-6"></div>}
             </div>
         </div>
-        <div className="text-xs uppercase tracking-wider text-slate-400">{statusText}</div>
+        <div className="text-xs uppercase tracking-wider text-slate-400">{statusText} {developerMode === 'developer' && '(Dev Mode)'}</div>
       </div>
       
       <div className="bg-gradient-to-br from-[#1F2328] to-[#1A1C1F] rounded-2xl p-5 mb-6 shadow-[inset_14px_14px_40px_rgba(16,16,18,0.75),inset_-7px_-7px_30px_#262E32]">
@@ -229,7 +232,7 @@ Internal Workflow Steps:
 1. Scan DOM for Inline Styles: Identify all elements with a 'style' attribute.
 2. Analyze Styles: Group common styling patterns (e.g., flexbox containers, cards, buttons).
 3. Generate Utility Classes: Create meaningful utility classes in a new CSS file (e.g., 'looper-card', 'looper-button').
-4. Replace Inline Styles: Remove the 'style' attributes from the HTML and apply the new utility classes.
+4. Replace Inline Styles: Remove the 'style' attribute from the HTML and apply the new utility classes.
 5. Final Review: Verify that the visual appearance of the page is unchanged and that all styles have been successfully extracted.`;
 
 const fullScanPrompt = `Full Application Scan & New Task List Generation
@@ -324,11 +327,11 @@ Buffer:
 Waiting for 60 seconds (simulated pause). Awaiting your prompt to continue.`;
 
 const safetyPrefix = "IMPORTANT: Do not crash the app. Take cautious and deliberate steps. ";
+const developerModePrefix = "[Developer Mode] You are an expert code analyst and senior software engineer. Your task is to perform deep code analysis, research, and implementation. ";
 const defaultPrompt = "🤖 Smart Analysis Mode: Analyzing current page context...";
 
 export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName: string}> = ({ className, projectName }) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [activeDevToolsTab] = useState('console');
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
@@ -345,10 +348,9 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   const [isSafetyOn, setIsSafetyOn] = useState(true);
   const [feedbackText, setFeedbackText] = useState('');
   const [promptError, setPromptError] = useState<string | null>(null);
+  const [developerMode, setDeveloperMode] = useState<'prototyper' | 'developer'>('prototyper');
   
   const timeSpentRef = useRef(timeSpent);
-  const isRunningRef = useRef(isRunning);
-  const isPausedRef = useRef(isPaused);
   
   const [sitemap, setSitemap] = useState<GenerateSitemapOutput['sitemap'] | null>(null);
   const [isScanningSitemap, setIsScanningSitemap] = useState(false);
@@ -362,11 +364,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   useEffect(() => {
     timeSpentRef.current = timeSpent;
   }, [timeSpent]);
-  
-  useEffect(() => {
-    isRunningRef.current = isRunning;
-    isPausedRef.current = isPaused;
-  }, [isRunning, isPaused]);
 
   // Function to save stats to Firestore
   const saveProjectStats = useCallback(async () => {
@@ -489,8 +486,15 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   };
   
   const getFinalPrompt = useCallback(() => {
-    return isSafetyOn ? `${safetyPrefix}${starterPrompt}` : starterPrompt;
-  }, [isSafetyOn, starterPrompt]);
+    let finalPrompt = starterPrompt;
+    if (developerMode === 'developer') {
+      finalPrompt = `${developerModePrefix}${finalPrompt}`;
+    }
+    if (isSafetyOn) {
+      finalPrompt = `${safetyPrefix}${finalPrompt}`;
+    }
+    return finalPrompt;
+  }, [isSafetyOn, starterPrompt, developerMode]);
 
   const addToHistory = (prompt: string) => {
     if (!prompt.trim()) return;
@@ -579,12 +583,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (isRunningRef.current) {
+      if (isRunning) {
         saveProjectStats();
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isRunning]);
 
 
   // Global error handler
@@ -641,15 +645,12 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
   // This is the core autonomous loop
   useEffect(() => {
     const autonomousLoop = async () => {
-      if (isRunningRef.current && !isPausedRef.current) {
-        // The agent acts on its current prompt
+      if (isRunning && !isPaused) {
         const suggestion = await handleInjectPrompt();
-
-        // The agent's output (suggestion) becomes its next input.
         if (suggestion) {
            setTimeout(() => {
                 setStarterPrompt(suggestion);
-           }, 3000); // Wait 3 seconds before next action
+           }, 3000); 
         }
       }
     };
@@ -657,7 +658,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     autonomousLoop();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starterPrompt]);
+  }, [starterPrompt, isRunning, isPaused]);
 
 
   const handleAuditPrompt = useCallback(async () => {
@@ -699,10 +700,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
     setActiveTab(newActiveTab);
   };
   
-  const handleDevToolsSubTabChange = (value: string) => {
-  }
-
-
   const handlePause = () => {
     if(isRunning) {
         const willBePaused = !isPaused;
@@ -754,8 +751,8 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
       setStatusText('Error');
     } finally {
       setIsThinking(false);
-      // We don't set status to Awaiting Approval anymore, loop handles it.
     }
+    return undefined;
   };
 
   const clearConsole = () => setConsoleEntries([]);
@@ -824,13 +821,45 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
        { id: 'refactor-css', icon: Paintbrush, title: "Refactor CSS", description: `Injects a prompt to refactor hardcoded HTML and extract CSS.`, iconClassName: "text-blue-400" },
        { id: 'devtools', icon: Terminal, title: "DevTools", description: "View console logs and captured issues.", iconClassName: "text-slate-400", children: (
         <div className="w-full h-full flex flex-col text-left" onClick={(e) => e.stopPropagation()}>
-          <Tabs defaultValue={'console'} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue={'mode'} className="w-full h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="mode">Mode</TabsTrigger>
               <TabsTrigger value="console">Console</TabsTrigger>
               <TabsTrigger value="issues">Issues</TabsTrigger>
               <TabsTrigger value="audit">Audit</TabsTrigger>
               <TabsTrigger value="sitemap">Sitemap</TabsTrigger>
             </TabsList>
+            <TabsContent value="mode" className="flex-grow mt-2">
+              <div className="flex flex-col gap-4 p-2 text-sm">
+                <p className="text-slate-400">Switch agent context between UI prototyping and deep code analysis.</p>
+                <div 
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors",
+                    developerMode === 'prototyper' ? 'border-primary bg-primary/10' : 'border-transparent hover:bg-slate-800'
+                  )}
+                  onClick={() => setDeveloperMode('prototyper')}
+                >
+                  <Layers className="h-6 w-6 text-primary" />
+                  <div>
+                    <h4 className="font-bold text-white">Prototyper</h4>
+                    <p className="text-slate-400 text-xs">Focus on rapid UI/UX generation and iteration.</p>
+                  </div>
+                </div>
+                <div 
+                   className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors",
+                    developerMode === 'developer' ? 'border-accent bg-accent/10' : 'border-transparent hover:bg-slate-800'
+                  )}
+                  onClick={() => setDeveloperMode('developer')}
+                >
+                   <Code className="h-6 w-6 text-accent" />
+                  <div>
+                    <h4 className="font-bold text-white">Developer</h4>
+                    <p className="text-slate-400 text-xs">For deep code analysis, research, and technical implementation.</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
             <TabsContent value="console" className="flex-grow mt-0">
                <div className="w-full h-full flex flex-col text-left">
                   <div className="flex gap-2 my-2">
@@ -1066,6 +1095,7 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
               isSafetyOn={isSafetyOn}
               safetyPrefix={safetyPrefix}
               promptError={promptError}
+              developerMode={developerMode}
             />
           </div>
 
@@ -1101,3 +1131,6 @@ export const LooperAutopilotAdvanced: React.FC<{className?: string, projectName:
 
 
 
+
+
+    
