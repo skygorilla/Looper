@@ -18,9 +18,10 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 999999;
+    z-index: 2147483647;
     pointer-events: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
   `;
   
   // Inject the Looper interface with AI chat
@@ -38,9 +39,11 @@
         align-items: center;
         justify-items: center;
         padding: 20px;
+        min-width: 600px;
+        max-width: 90vw;
       ">
         <!-- Left Tabs -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 20px; z-index: 10;">
           <div onclick="toggleDevTools()" style="
             width: 56px;
             height: 56px;
@@ -51,8 +54,10 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-          ">
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 11;
+          " onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
               <polyline points="4,17 10,11 4,5"></polyline>
               <line x1="12" y1="19" x2="20" y2="19"></line>
@@ -139,6 +144,8 @@
                 align-items: center;
                 justify-content: center;
                 transition: all 0.2s ease;
+                position: relative;
+                z-index: 12;
               ">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="5,3 19,12 5,21"></polygon>
@@ -158,6 +165,8 @@
                 justify-content: center;
                 transition: all 0.2s ease;
                 font-size: 12px;
+                position: relative;
+                z-index: 12;
               ">
                 🚀 AUTO
               </button>
@@ -196,6 +205,8 @@
             transition: all 0.2s ease;
             margin-bottom: 20px;
             font-weight: 600;
+            position: relative;
+            z-index: 12;
           ">
             💬 Chat with Looper
           </button>
@@ -207,7 +218,7 @@
         </div>
 
         <!-- Right Tabs -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 20px; z-index: 10;">
           <div onclick="loadFullScan()" style="
             width: 56px;
             height: 56px;
@@ -218,12 +229,53 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-          ">
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 11;
+          " onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
               <path d="M2 17l10 5 10-5"></path>
               <path d="M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+          <div onclick="toggleHistory()" style="
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1F2328 0%, #1A1C1F 100%);
+            box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 11;
+          " onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <path d="M3 3v5h5"></path>
+              <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+              <path d="M12 7v5l4 2"></path>
+            </svg>
+          </div>
+          <div onclick="toggleSettings()" style="
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1F2328 0%, #1A1C1F 100%);
+            box-shadow: 10px 15px 40px #000000, -10px -15px 40px #2F393D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 11;
+          " onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m10.5-3.5L19 4m-7 7l2.5 2.5M4 19l2.5-2.5m7-7L16 7"></path>
             </svg>
           </div>
         </div>
@@ -556,6 +608,26 @@ User: ${userMessage}`
       
       setTimeout(() => {
         textarea.value = originalValue;
+      }, 3000);
+    }
+  };
+  
+  window.toggleHistory = function() {
+    const textarea = document.getElementById('starterPrompt');
+    if (textarea) {
+      textarea.value = '📜 Chat History: Feature coming soon...';
+      setTimeout(() => {
+        textarea.value = '';
+      }, 2000);
+    }
+  };
+  
+  window.toggleSettings = function() {
+    const textarea = document.getElementById('starterPrompt');
+    if (textarea) {
+      textarea.value = `⚙️ Settings:\n• Auto-run: ${autoRunEnabled ? 'ON' : 'OFF'}\n• Platform: ${detectPageContext().platform}\n• Version: 2.0`;
+      setTimeout(() => {
+        textarea.value = '';
       }, 3000);
     }
   };
