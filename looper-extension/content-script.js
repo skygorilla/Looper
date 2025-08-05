@@ -293,6 +293,66 @@
   
   // Using built-in Gemini API
   
+  // Page context detection
+  function detectPageContext() {
+    const url = window.location.href;
+    const title = document.title;
+    const hostname = window.location.hostname;
+    
+    let context = {
+      platform: 'Unknown',
+      tool: 'Unknown',
+      chatSystem: 'Unknown',
+      pageType: 'Unknown'
+    };
+    
+    // Detect platforms
+    if (hostname.includes('github.com')) {
+      context.platform = 'GitHub';
+      context.tool = 'Git Repository';
+    } else if (hostname.includes('vscode.dev') || hostname.includes('github.dev')) {
+      context.platform = 'VS Code Web';
+      context.tool = 'Code Editor';
+    } else if (hostname.includes('figma.com')) {
+      context.platform = 'Figma';
+      context.tool = 'Design Tool';
+    } else if (hostname.includes('prototyper') || title.toLowerCase().includes('prototyper')) {
+      context.platform = 'Prototyper';
+      context.tool = 'Prototyping Tool';
+    } else if (hostname.includes('aws.amazon.com')) {
+      context.platform = 'AWS Console';
+      context.tool = 'Cloud Management';
+    }
+    
+    // Detect chat systems
+    if (document.querySelector('[data-testid="chat-input"]') || document.querySelector('.chat-input')) {
+      context.chatSystem = 'Generic Chat Interface';
+    }
+    if (document.querySelector('[data-qa="chat-input"]') || title.includes('Claude')) {
+      context.chatSystem = 'Claude (Anthropic)';
+    }
+    if (document.querySelector('[aria-label*="Amazon Q"]') || title.includes('Amazon Q')) {
+      context.chatSystem = 'Amazon Q (Claude Sonnet 3.5)';
+    }
+    if (document.querySelector('[data-testid="prompt-textarea"]') || hostname.includes('openai.com')) {
+      context.chatSystem = 'ChatGPT (OpenAI)';
+    }
+    if (document.querySelector('[data-testid="bard"]') || hostname.includes('bard.google.com')) {
+      context.chatSystem = 'Bard (Google)';
+    }
+    
+    // Detect page types
+    if (document.querySelector('textarea[id*="prompt"]') || document.querySelector('textarea[placeholder*="Ask"]')) {
+      context.pageType = 'AI Chat Interface';
+    } else if (document.querySelector('.monaco-editor') || document.querySelector('.CodeMirror')) {
+      context.pageType = 'Code Editor';
+    } else if (document.querySelector('canvas') && context.platform === 'Figma') {
+      context.pageType = 'Design Canvas';
+    }
+    
+    return context;
+  }
+  
   window.chatWithLooper = async function() {
     const textarea = document.getElementById('starterPrompt');
     if (!textarea || !textarea.value.trim()) return;
@@ -311,6 +371,9 @@
     updateCounters();
     
     try {
+      // Detect current page context
+      const pageContext = detectPageContext();
+      
       // Real Gemini API call
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCwM-woaN63Xc3EQ4STNLHFgR1DqPTsEtA`, {
         method: 'POST',
@@ -320,7 +383,19 @@
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `You are Looper, a UI automation assistant. Help users with web automation, element selection, CSS selectors, XPath, and testing. Be concise and practical. Current page: ${window.location.href}\n\nUser: ${userMessage}`
+              text: `You are Looper, a self-aware UI automation assistant. 
+
+CURRENT CONTEXT:
+- Platform: ${pageContext.platform}
+- Tool: ${pageContext.tool} 
+- Chat System: ${pageContext.chatSystem}
+- Page Type: ${pageContext.pageType}
+- URL: ${window.location.href}
+- Title: ${document.title}
+
+You are aware of where you are running and can provide context-specific help. Help users with web automation, element selection, CSS selectors, XPath, and testing. Be concise and practical.
+
+User: ${userMessage}`
             }]
           }],
           generationConfig: {
@@ -361,7 +436,27 @@
   };
   
   window.toggleDevTools = function() {
-    console.log('DevTools tab clicked');
+    const context = detectPageContext();
+    console.log('🔍 Looper Page Analysis:', {
+      platform: context.platform,
+      tool: context.tool,
+      chatSystem: context.chatSystem,
+      pageType: context.pageType,
+      url: window.location.href,
+      title: document.title,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Show context in textarea temporarily
+    const textarea = document.getElementById('starterPrompt');
+    if (textarea) {
+      const originalValue = textarea.value;
+      textarea.value = `🔍 Page Context:\n• Platform: ${context.platform}\n• Tool: ${context.tool}\n• Chat: ${context.chatSystem}\n• Type: ${context.pageType}`;
+      
+      setTimeout(() => {
+        textarea.value = originalValue;
+      }, 3000);
+    }
   };
   
 })();
